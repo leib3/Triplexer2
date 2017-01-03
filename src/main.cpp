@@ -1,6 +1,7 @@
 #include "WProgram.h"
 #include "LiquidCrystal.h"
                // RS, E, D4, D5, D6, D7
+
 extern LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 static int * raw;
 int lcd_key = 0;
