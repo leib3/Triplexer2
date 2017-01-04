@@ -7,3 +7,7 @@ typedef const struct MenuStruct
    unsigned char enter;
    void ( *fp ) ( void );
 } MenuEntry;
+
+void browseMenu();
+
+void showMenu();

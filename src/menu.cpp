@@ -1,9 +1,10 @@
 #include "menu.h"
 #include "LiquidCrystal.h"
+#include "DFRkeypad.h"
 
-const char menu_000[] = "[Main Menu]"; // 0
-const char menu_001[] = "Config";        // 1
-const char menu_002[] = "Calibration";   // 2
+const char menu_000[] = "[Main Menu]";        // 0
+const char menu_001[] = "Config";             // 1
+const char menu_002[] = "Calibration";        // 2
 
 const char menu_100[] = "[Config parameter]"; // 3
 const char menu_101[] = "X";                  // 4
@@ -29,32 +30,41 @@ const char menu_133[] = "return";             // 19
 unsigned char selected = 1;
 extern LiquidCrystal lcd;
 
+void testMe() {
+   lcd.clear();
+   lcd.print("It works!!!");
+
+   while(DFRkeypad::GetKey() != 5); // loop until user hits enter
+
+   return;
+}
+
 MenuEntry menu[] =
 {
-   {menu_000, 3, 0, 0, 0, 0}, // [Main Menu]]
-   {menu_001, 3, 1, 2, 4, 0},
-   {menu_002, 3, 1, 2, 2, 0},
-
-   {menu_100, 5, 0, 0, 0, 0}, // [Config parameter]
-   {menu_101, 5, 4, 5, 8, 0},
-   {menu_102, 5, 4, 6, 11, 0},
-   {menu_103, 5, 5, 7, 14, 0},
-   {menu_104, 5, 6, 7, 1, 0},
-
-   {menu_110, 4, 0, 0, 0, 0}, // [Config X]
-   {menu_111, 4, 9, 10, 9, 0},                  
-   {menu_112, 4, 9, 11, 10, 0},
-   {menu_113, 4, 10, 11, 4, 0},
-
-   {menu_120, 4, 0, 0, 0, 0}, // [Config Y]
-   {menu_121, 4, 13, 14, 13, 0}, 
-   {menu_122, 4, 13, 15, 14, 0},
-   {menu_123, 4, 14, 15, 4, 0},
-
-   {menu_130, 4, 0, 0, 0, 0},  // [Config TOT]
-   {menu_131, 4, 17, 18, 17, 0},
-   {menu_132, 4, 17, 19, 18, 0},
-   {menu_133, 4, 18, 19, 4, 0},
+   {menu_000, 3, 0, 0, 0, 0}, // [Main Menu]]// 0
+   {menu_001, 3, 1, 2, 4, 0},                // 1
+   {menu_002, 3, 1, 2, 2, 0},                // 2
+                                                  
+   {menu_100, 5, 0, 0, 0, 0}, // [Config para// 3 meter]
+   {menu_101, 5, 4, 5, 9, 0},                // 4
+   {menu_102, 5, 4, 6, 13, 0},               // 5 
+   {menu_103, 5, 5, 7, 17, 0},               // 6
+   {menu_104, 5, 6, 7, 1, 0},                // 7 
+                                                  
+   {menu_110, 4, 0, 0, 0, 0}, // [Config X]  // 8
+   {menu_111, 4, 9, 10, 9, testMe},          // 9         
+   {menu_112, 4, 9, 11, 10, 0},              // 10
+   {menu_113, 4, 10, 11, 4, 0},              // 11
+                                                  
+   {menu_120, 4, 0, 0, 0, 0}, // [Config Y]  // 12
+   {menu_121, 4, 13, 14, 13, 0},             // 13
+   {menu_122, 4, 13, 15, 14, 0},             // 14
+   {menu_123, 4, 14, 15, 4, 0},              // 15
+                                                  
+   {menu_130, 4, 0, 0, 0, 0},  // [Config TOT// 16]
+   {menu_131, 4, 17, 18, 17, 0},             // 17
+   {menu_132, 4, 17, 19, 18, 0},             // 18
+   {menu_133, 4, 18, 19, 4, 0},              // 19
 };
 
 void showMenu() {
@@ -70,6 +80,7 @@ void showMenu() {
    --to;
    
    //temp = from;
+   lcd.clear();
    
    if ( (selected < (from + 2)) ) {
       to = from + 1;
@@ -100,9 +111,30 @@ void showMenu() {
       lcd.setCursor(0,1);
       lcd.print("selection!"); 
    }
+   delay(20);
 }
 
 void browseMenu() {
    
+   showMenu();
+   static char buffer[15];
 
+   uint8_t key = DFRkeypad::GetKey();
+   strcpy(buffer, DFRkeypad::KeyName(key));
+   Serial.print("*  key: ");
+   Serial.println(buffer);
+
+   if (!strcmp(buffer, DFRkeypad::sKEY[2])) {
+     selected = menu[selected].up;
+   } 
+   if (!strcmp(buffer, DFRkeypad::sKEY[3])) {
+      selected = menu[selected].down;
+   }
+   if (!strcmp(buffer, DFRkeypad::sKEY[5])) {
+      if (menu[selected].fp != 0 ) {
+         menu[selected].fp();
+      }
+      selected = menu[selected].enter;
+   }
 }
+
