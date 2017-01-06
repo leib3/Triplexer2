@@ -94,7 +94,7 @@ void showMenu() {
       lcd.print("-");
    }
    else if ( (selected >= (from + 2)) ) {
-      from = selected - 2;
+      from = selected - 1;
       to = from + 1;
 
       for (from; from<=to; ++from) {
@@ -124,13 +124,13 @@ void browseMenu() {
    Serial.print("*  key: ");
    Serial.println(buffer);
 
-   if (!strcmp(buffer, DFRkeypad::sKEY[2])) {
+   if (!strcmp(buffer, DFRkeypad::sKEY[2])) { // up
      selected = menu[selected].up;
    } 
-   if (!strcmp(buffer, DFRkeypad::sKEY[3])) {
+   if (!strcmp(buffer, DFRkeypad::sKEY[3])) { // down
       selected = menu[selected].down;
    }
-   if (!strcmp(buffer, DFRkeypad::sKEY[5])) {
+   if (!strcmp(buffer, DFRkeypad::sKEY[5])) { // enter
       if (menu[selected].fp != 0 ) {
          menu[selected].fp();
       }
