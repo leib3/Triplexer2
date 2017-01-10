@@ -1,3 +1,22 @@
+# Triplexer
+STEVE, DANIEL, and MATT:
+These directions below walk you through the template I have used for the triplexer project.
+This setup allows you to work with the entire Teensy codebase at your fingertips, which is 
+something the Arduino IDE prevents you from doing. There is nothing stopping you from using an IDE
+but it will take a considerable amount of time to setup. If you're at all familiar with makefiles,
+the instructions below should be pretty straightfoward. Otherwise, you're going to need to do some
+reading. Basically, you'll notice a file called `Makefile` in the triplexer directory. The creator of
+the Teensy template, apmorton, wrote it. What it does is handle the actual compilation of the entire
+codebase  in an efficient way -- in particular, each time you type `make` in a terminal in the triplexer 
+directory, only source files you have modified and other source files that depend on those modified files
+are recompiled, saving time. 
+
+**IMPORTANT NOTE:** the code I've written is in the `src` folder!
+
+Some decent introductory material on Makefiles:
+(http://matt.might.net/articles/intro-to-make/)
+
+**The instructions below are from the teensy template github page: (https://github.com/apmorton/teensy-template)**
 
 Teensy 3.X Project Template
 ===========================
