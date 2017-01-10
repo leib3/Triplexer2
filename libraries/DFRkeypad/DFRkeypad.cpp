@@ -25,7 +25,7 @@ int DFRkeypad::iKEY_REPEAT_DELAY=250;       // default repeat delay for keys on 
 byte DFRkeypad::LastKey=DFRkeypad::eNO_KEY;
 unsigned long DFRkeypad::LastTime=0;
 bool DFRkeypad::bRepeat=false;
-
+// We don't need any of this -- that's why it's commented out.
 // defines for setting and clearing register bits
 /*
 #ifndef cbi
