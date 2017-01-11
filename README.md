@@ -10,6 +10,15 @@ the Teensy template, apmorton, wrote it. What it does is handle the actual compi
 codebase  in an efficient way -- in particular, each time you type `make` in a terminal in the triplexer 
 directory, only source files you have modified and other source files that depend on those modified files
 are recompiled, saving time. 
+#### Git
+Now about git itself. Two links follow. The first 
+is a "quick and dirty" introduction to git commands, and the second is a link to the official git document-
+ation. I would strongly suggest you read the first 2-3 chapters of the git documentation. Note that if you
+would prefer to abstract away the command-line usage of git that there are graphical front-ends around, but
+you'll have to do some googling. 
+
+1. (http://rogerdudler.github.io/git-guide/)
+2. (https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control)
 
 **IMPORTANT NOTE:** the code I've written is in the `src` folder!
 
