@@ -1,4 +1,9 @@
 # Triplexer
+
+### Update
+**In `OPTIONS` in the Makefile, replace `-DUSB_SERIAL` with `-DUSB_MIDI_SERIAL` to
+enable USB MIDI and serial simultaneously.**
+
 STEVE, DANIEL, and MATT:
 These directions below walk you through the template I have used for the triplexer project.
 This setup allows you to work with the entire Teensy codebase at your fingertips, which is 
@@ -10,7 +15,7 @@ the Teensy template, apmorton, wrote it. What it does is handle the actual compi
 codebase  in an efficient way -- in particular, each time you type `make` in a terminal in the triplexer 
 directory, only source files you have modified and other source files that depend on those modified files
 are recompiled, saving time. 
-#### Git
+### Git
 Now about git itself. Two links follow. The first 
 is a "quick and dirty" introduction to git commands, and the second is a link to the official git document-
 ation. I would strongly suggest you read the first 2-3 chapters of the git documentation. Note that if you
