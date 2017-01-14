@@ -4,8 +4,7 @@
                // RS, E, D4, D5, D6, D7
 LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 //static int * raw;
-int lcd_key = 0;
-
+const int channel = 1;
 #define btnRIGHT  0
 #define btnUP     1
 #define btnDOWN   2
@@ -19,6 +18,8 @@ void init() {
 	pinMode(13, OUTPUT);
    digitalWriteFast(13, HIGH);
    lcd.begin(16,2);
+  // usbMIDI.sendNoteOn(60, 99, channel);
+  // usbMIDI.sendControlChange(5, 50, channel);
    //raw = (int *)malloc(sizeof(int));
 }
 
@@ -33,6 +34,12 @@ extern "C" int main()
    init();
    while (1) {
       browseMenu();
+      if (usbMIDI.read() != 0) {
+         Serial.print("Rcvd type ");
+         Serial.println(usbMIDI.getType());
+         Serial.print("MIDI channel ");
+         Serial.println(usbMIDI.getChannel());
+      }
    }  
 }
 

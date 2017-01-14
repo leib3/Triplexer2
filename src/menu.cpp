@@ -28,7 +28,7 @@ const char menu_132[] = "MIDI CC #";          // 18
 const char menu_133[] = "return";             // 19 
 
 unsigned char selected = 1;
-extern LiquidCrystal lcd;
+extern LiquidCrystal lcd; // lcd object is declared in main.cpp
 
 void testMe() {
    lcd.clear();
@@ -41,30 +41,26 @@ void testMe() {
 
 MenuEntry menu[] =
 {
-   {menu_000, 3, 0, 0, 0, 0}, // [Main Menu]]// 0
-   {menu_001, 3, 1, 2, 4, 0},                // 1
-   {menu_002, 3, 1, 2, 2, 0},                // 2
+   {menu_000, 3, 0, 0, 0, 0, 0}, // [Main Menu]]// 0
+   {menu_001, 3, 1, 2, 4, 1, 0},                // 1
+   {menu_002, 3, 1, 2, 2, 1, 0},                // 2
                                                   
-   {menu_100, 5, 0, 0, 0, 0}, // [Config para// 3 meter]
-   {menu_101, 5, 4, 5, 9, 0},                // 4
-   {menu_102, 5, 4, 6, 13, 0},               // 5 
-   {menu_103, 5, 5, 7, 17, 0},               // 6
-   {menu_104, 5, 6, 7, 1, 0},                // 7 
+   {menu_100, 4, 0, 0, 0, 0, 0}, // [Config param] // 3
+   {menu_101, 4, 4, 5, 8, 1, 0},                // 4
+   {menu_102, 4, 4, 6, 11, 1, 0},               // 5 
+   {menu_103, 4, 5, 6, 14, 1, 0},               // 6
                                                   
-   {menu_110, 4, 0, 0, 0, 0}, // [Config X]  // 8
-   {menu_111, 4, 9, 10, 9, testMe},          // 9         
-   {menu_112, 4, 9, 11, 10, 0},              // 10
-   {menu_113, 4, 10, 11, 4, 0},              // 11
+   {menu_110, 3, 0, 0, 0, 0, 0}, // [Config X]     // 7
+   {menu_111, 3, 8, 9, 8, 4, testMe},           // 8         
+   {menu_112, 3, 8, 9, 9, 4, 0},              // 9
                                                   
-   {menu_120, 4, 0, 0, 0, 0}, // [Config Y]  // 12
-   {menu_121, 4, 13, 14, 13, 0},             // 13
-   {menu_122, 4, 13, 15, 14, 0},             // 14
-   {menu_123, 4, 14, 15, 4, 0},              // 15
+   {menu_120, 3, 0, 0, 0, 0, 0}, // [Config Y]  // 10
+   {menu_121, 3, 11, 12, 11, 5, 0},             // 11
+   {menu_122, 3, 11, 12, 12, 5, 0},             // 12
                                                   
-   {menu_130, 4, 0, 0, 0, 0},  // [Config TOT// 16]
-   {menu_131, 4, 17, 18, 17, 0},             // 17
-   {menu_132, 4, 17, 19, 18, 0},             // 18
-   {menu_133, 4, 18, 19, 4, 0},              // 19
+   {menu_130, 3, 0, 0, 0, 0, 0},  // [Config TOT// 13]
+   {menu_131, 3, 14, 15, 14, 6, 0},             // 14
+   {menu_132, 3, 14, 15, 15, 6, 0},             // 15
 };
 
 void showMenu() {
@@ -80,7 +76,9 @@ void showMenu() {
    --to;
    
    //temp = from;
-   lcd.clear();
+   lcd.clear(); // the LCD being cleared and redrawn on each
+   // iteration of the loop is responsible for the flicker. 
+   // I need to do this in a more intelligent way.
    
    if ( (selected < (from + 2)) ) {
       to = from + 1;
@@ -130,7 +128,10 @@ void browseMenu() {
    if (!strcmp(buffer, DFRkeypad::sKEY[3])) { // down
       selected = menu[selected].down;
    }
-   if (!strcmp(buffer, DFRkeypad::sKEY[5])) { // enter
+   if (!strcmp(buffer, DFRkeypad::sKEY[5])) { // back (actually LEFT KEY)
+      selected = menu[selected].back;
+   }
+   if (!strcmp(buffer, DFRkeypad::sKEY[1])) { // enter (actually RIGHT KEY)
       if (menu[selected].fp != 0 ) {
          menu[selected].fp();
       }

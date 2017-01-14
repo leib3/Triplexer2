@@ -5,6 +5,7 @@ typedef const struct MenuStruct
    unsigned char up;
    unsigned char down;
    unsigned char enter;
+   unsigned char back;
    void ( *fp ) ( void );
 } MenuEntry;
 
