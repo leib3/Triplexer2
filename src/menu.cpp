@@ -54,8 +54,8 @@ MenuEntry menu[] =
                                                   
    {menu_100, 4, 0, 0, 0, 0, 0}, // [Config param] 3
    {menu_101, 4, 4, 5, 8, 1, 0},                // 4
-   {menu_102, 4, 4, 6, 11, 1, 0},               // 5 
-   {menu_103, 4, 5, 6, 14, 1, 0},               // 6
+   {menu_102, 4, 4, 6, 12, 1, 0},               // 5 
+   {menu_103, 4, 5, 6, 16, 1, 0},               // 6
                                                   
    {menu_210, 4, 0, 0, 0, 0, 0}, // [Config X]     7
    {menu_211, 4, 8, 9, 8, 4, testMe},           // 8         
@@ -65,12 +65,12 @@ MenuEntry menu[] =
    {menu_220, 4, 0, 0, 0, 0, 0}, // [Config Y]  // 11
    {menu_221, 4, 12, 13, 12, 5, 0},             // 12
    {menu_222, 4, 12, 14, 13, 5, 0},             // 13
-   {menu_222, 4, 13, 14, 14, 5, 0},             // 14
+   {menu_223, 4, 13, 14, 14, 5, 0},             // 14
                                                  
    {menu_230, 4, 0, 0, 0, 0, 0},  // [Config TOT// 15
    {menu_231, 4, 16, 17, 16, 6, 0},             // 16
    {menu_232, 4, 16, 18, 17, 6, 0},             // 17
-   {menu_232, 4, 17, 18, 18, 6, 0}             // 18
+   {menu_233, 4, 17, 18, 18, 6, 0},             // 18
 };
 
 
@@ -105,10 +105,10 @@ static unsigned char param;
    return;
 }
 
-void configMIDIChannel() {
+/*void configMIDIChannel() {
 
 }
-
+*/
 void showMenu() {
    unsigned char from = 0;
    unsigned char to = 0;
