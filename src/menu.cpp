@@ -6,6 +6,19 @@
 // containing current MIDI channel #s and CC #s for each 
 // control parameter, plus other relevant status info for
 // debugging purposes. 
+typedef struct settingsStruct
+{
+   uint8_t xCCNum;
+   uint8_t xChannelNum;
+   uint8_t yCCNum;
+   uint8_t yChannelNum;
+   uint8_t totCCNum;
+   uint8_t totChannelNum;
+   bool xInv;
+   bool yInv;
+   bool totInv;
+} tpxSettings;
+
 
 unsigned char selected = 1;
 extern LiquidCrystal lcd; // lcd object is declared in main.cpp
@@ -19,23 +32,78 @@ const char menu_101[] = "X";                  // 4
 const char menu_102[] = "Y";                  // 5                       
 const char menu_103[] = "TOT";                // 6
 
-const char menu_210[] = "[Config X]";         // 7
-const char menu_211[] = "MIDI channel";       // 8
-const char menu_212[] = "MIDI CC #";          // 9 
-const char menu_213[] = "INV X";              // 10
+const char menu_200[] = "[Config X]";         // 7
+const char menu_201[] = "MIDI channel";       // 8
+const char menu_202[] = "MIDI CC #";          // 9 
+const char menu_203[] = "INV X";              // 10
 
-const char menu_220[] = "[Config Y]";         // 11
-const char menu_221[] = "MIDI channel";       // 12
-const char menu_222[] = "MIDI CC #";          // 13
-const char menu_223[] = "INV Y";              // 14
+const char menu_210[] = "[Config Y]";         // 11
+const char menu_211[] = "MIDI channel";       // 12
+const char menu_212[] = "MIDI CC #";          // 13
+const char menu_213[] = "INV Y";              // 14
 
-const char menu_230[] = "[Config TOT]";       // 15
-const char menu_231[] = "MIDI channel";       // 16
-const char menu_232[] = "MIDI CC #";          // 17
-const char menu_233[] = "INV TOT";            // 18
+const char menu_220[] = "[Config TOT]";       // 15
+const char menu_221[] = "MIDI channel";       // 16
+const char menu_222[] = "MIDI CC #";          // 17
+const char menu_223[] = "INV TOT";            // 18
 
-const char menu_310[] = "[X MIDI CHNL #]";    // 19
-const char menu_320[] = "[X CC #]";           // 20
+const char menu_300[] = "[X MIDI CHNL #]";    // 19
+const char menu_301[] = "[X CC #]";           // 20
+
+// These functions will be used to configure the MIDI channel and CC #s.
+// I really want to separate what the user sees (view) from what's
+// going on under the hood (MIDI CC stuff) but I'm not sure how 
+// to do this. 
+//
+// When we get the load cells working their input will be the 
+// MIDI CC value output from the weight processing module (to be written)
+// we can infer which parameter is being configured based on 
+// the value of 'selected'. 
+void configMIDICC() {
+   static unsigned char param;
+   switch (selected) {
+      case 9:
+                param = 'X';
+                break;
+        case 13:
+                param = 'Y';
+                break;
+        case 17:
+                param = 'T';
+                break;
+   }
+   lcd.clear();
+   lcd.setCursor(0,0);
+   lcd.print("[MIDI CHNL #]");
+   lcd.print(0,15);
+   lcd.print(param);
+   while(DFRkeypad::GetKey() != 1); // loop until user hits enter
+   // placeholder
+   return;
+}
+
+void configMIDIChannel() {
+  static unsigned char param;
+  switch (selected) {
+     case 8:
+             param = 'X';
+             break;
+     case 12:
+             param = 'Y';
+             break;
+     case 16:
+             param = 'T';
+             break;
+  }
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("[MIDI CC #]");
+  lcd.setCursor(0,15);
+  lcd.print(param);
+  while(DFRkeypad::GetKey() != 1); // loop until user hits enter
+   // placeholder
+  return;
+}
 
 void testMe() {
    lcd.clear();
@@ -57,58 +125,22 @@ MenuEntry menu[] =
    {menu_102, 4, 4, 6, 12, 1, 0},               // 5 
    {menu_103, 4, 5, 6, 16, 1, 0},               // 6
                                                   
-   {menu_210, 4, 0, 0, 0, 0, 0}, // [Config X]     7
-   {menu_211, 4, 8, 9, 8, 4, testMe},           // 8         
-   {menu_212, 4, 8, 10, 9, 4, 0},               // 9
-   {menu_213, 4, 9, 10, 10, 4, 0},              // 10
+   {menu_200, 4, 0, 0, 0, 0, 0}, // [Config X]     7
+   {menu_201, 4, 8, 9, 8, 4, configMIDIChannel},           // 8         
+   {menu_202, 4, 8, 10, 9, 4, configMIDICC},               // 9
+   {menu_203, 4, 9, 10, 10, 4, 0},              // 10
                                                  
-   {menu_220, 4, 0, 0, 0, 0, 0}, // [Config Y]  // 11
-   {menu_221, 4, 12, 13, 12, 5, 0},             // 12
-   {menu_222, 4, 12, 14, 13, 5, 0},             // 13
-   {menu_223, 4, 13, 14, 14, 5, 0},             // 14
+   {menu_210, 4, 0, 0, 0, 0, 0}, // [Config Y]  // 11
+   {menu_211, 4, 12, 13, 12, 5, configMIDIChannel},             // 12
+   {menu_212, 4, 12, 14, 13, 5, configMIDICC},             // 13
+   {menu_213, 4, 13, 14, 14, 5, 0},             // 14
                                                  
-   {menu_230, 4, 0, 0, 0, 0, 0},  // [Config TOT// 15
-   {menu_231, 4, 16, 17, 16, 6, 0},             // 16
-   {menu_232, 4, 16, 18, 17, 6, 0},             // 17
-   {menu_233, 4, 17, 18, 18, 6, 0},             // 18
+   {menu_220, 4, 0, 0, 0, 0, 0},  // [Config TOT// 15
+   {menu_221, 4, 16, 17, 16, 6, configMIDIChannel},             // 16
+   {menu_222, 4, 16, 18, 17, 6, configMIDICC},             // 17
+   {menu_223, 4, 17, 18, 18, 6, 0}             // 18
 };
 
-
-// These functions will be used to actually send the MIDI cmds.
-// I really want to separate what the user sees (view) from what's
-// going on under the hood (MIDI CC stuff) but I'm really not sure how 
-// to do this. 
-//
-// When we get the load cells working their input will be the 
-// MIDI CC value output from the weight processing module (to be written)
-// we can infer which parameter is being configured based on 
-// the value of 'selected'. This may be a hacky solution
-// but I want to keep the fp void (args and return value) for now
-void configMIDICC() {
-static unsigned char param;
-   switch (selected) {
-        case 9:
-                param = 'X';
-                break;
-        case 13:
-                param = 'Y';
-                break;
-        case 17:
-                param = 'T';
-                break;
-   }
-   lcd.clear();
-   lcd.setCursor(0,0);
-   lcd.print(param);
-   while(DFRkeypad::GetKey() != 1); // loop until user hits enter
-   // placeholder
-   return;
-}
-
-/*void configMIDIChannel() {
-
-}
-*/
 void showMenu() {
    unsigned char from = 0;
    unsigned char to = 0;
