@@ -60,9 +60,9 @@ const char menu_301[] = "[X CC #]";           // 20
 // we can infer which parameter is being configured based on 
 // the value of 'selected'. 
 void configMIDICC() {
-   static unsigned char param;
+   static char param;
    switch (selected) {
-      case 9:
+        case 9:
                 param = 'X';
                 break;
         case 13:
@@ -75,7 +75,7 @@ void configMIDICC() {
    lcd.clear();
    lcd.setCursor(0,0);
    lcd.print("[MIDI CHNL #]");
-   lcd.print(0,15);
+   lcd.setCursor(14,0);
    lcd.print(param);
    while(DFRkeypad::GetKey() != 1); // loop until user hits enter
    // placeholder
@@ -83,7 +83,7 @@ void configMIDICC() {
 }
 
 void configMIDIChannel() {
-  static unsigned char param;
+  static char param;
   switch (selected) {
      case 8:
              param = 'X';
@@ -98,20 +98,11 @@ void configMIDIChannel() {
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("[MIDI CC #]");
-  lcd.setCursor(0,15);
+  lcd.setCursor(14,0);
   lcd.print(param);
   while(DFRkeypad::GetKey() != 1); // loop until user hits enter
    // placeholder
   return;
-}
-
-void testMe() {
-   lcd.clear();
-   lcd.print("It works!!!");
-
-   while(DFRkeypad::GetKey() != 1); // loop until user hits enter
-
-   return;
 }
 
 MenuEntry menu[] =
