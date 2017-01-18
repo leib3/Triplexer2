@@ -14,7 +14,7 @@
 // sKEY contains button labels corresponding to resistor values in iARV_VALUES
 const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
 // iARV_VALUES contains ADC readings corresponding to each button press
-const int DFRkeypad::iARV_VALUES[DFRkeypad::eNUM_KEYS]= { 1023,        0/*100*/,   300,  625,    9999,     925,      -1   };
+const int DFRkeypad::iARV_VALUES[DFRkeypad::eNUM_KEYS]= { 1023,        0/*100*/,   300,  575,    850,     750,      -1   };
 // iKEY is count of read button vals during debouncing interval
 int DFRkeypad::iKEY[DFRkeypad::eNUM_KEYS]=              { 0,           0,         0,    0,      0,       0,         0   };
 
