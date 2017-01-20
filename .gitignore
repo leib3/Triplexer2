@@ -1,10 +1,9 @@
-*.swp
-*.swo
 tags
 *.elf
 *.hex
+*.o
+*.d
+*.swp
+*.swo
 
-src/*.swp
-src/*.swo
-build/*
 libraries/LiquidCrystal/examples/*

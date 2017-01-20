@@ -180,7 +180,7 @@ void browseMenu() {
    if (!strcmp(buffer, DFRkeypad::sKEY[3])) { // down
       selected = menu[selected].down;
    }
-   if (!strcmp(buffer, DFRkeypad::sKEY[5])) { // back (actually LEFT KEY)
+   if (!strcmp(buffer, DFRkeypad::sKEY[4])) { // back (actually LEFT KEY)
       selected = menu[selected].back;
    }
    if (!strcmp(buffer, DFRkeypad::sKEY[1])) { // enter (actually RIGHT KEY)
