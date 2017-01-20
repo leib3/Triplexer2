@@ -12,12 +12,25 @@ const int channel = 1;
 #define btnSELECT 4
 #define btnNONE   5  
 
+void ISRtest() {
+   digitalWriteFast(13, LOW);
+   delay(750);
+   digitalWriteFast(13, HIGH);
+   delay(750);
+   digitalWriteFast(13, LOW);
+   delay(750);
+   digitalWriteFast(13, HIGH);
+
+   return;
+}
+
 void init() {
    Serial.begin(9600);
    Serial.println("Hello from outside Arduino!");
 	pinMode(13, OUTPUT);
    digitalWriteFast(13, HIGH);
    lcd.begin(16,2);
+  // attachInterrupt(A8, ISRtest, CHANGE);
   // usbMIDI.sendNoteOn(60, 99, channel);
   // usbMIDI.sendControlChange(5, 50, channel);
    //raw = (int *)malloc(sizeof(int));

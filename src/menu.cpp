@@ -2,24 +2,6 @@
 #include "LiquidCrystal.h"
 #include "DFRkeypad.h"
 
-//TODO: Create global struct or pointer to global struct 
-// containing current MIDI channel #s and CC #s for each 
-// control parameter, plus other relevant status info for
-// debugging purposes. 
-typedef struct settingsStruct
-{
-   uint8_t xCCNum;
-   uint8_t xChannelNum;
-   uint8_t yCCNum;
-   uint8_t yChannelNum;
-   uint8_t totCCNum;
-   uint8_t totChannelNum;
-   bool xInv;
-   bool yInv;
-   bool totInv;
-} tpxSettings;
-
-
 unsigned char selected = 1;
 extern LiquidCrystal lcd; // lcd object is declared in main.cpp
 
@@ -59,6 +41,7 @@ const char menu_301[] = "[X CC #]";           // 20
 // MIDI CC value output from the weight processing module (to be written)
 // we can infer which parameter is being configured based on 
 // the value of 'selected'. 
+//const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
 void configMIDICC() {
    static char param;
    switch (selected) {
@@ -77,8 +60,8 @@ void configMIDICC() {
    lcd.print("[MIDI CHNL #]");
    lcd.setCursor(14,0);
    lcd.print(param);
-   while(DFRkeypad::GetKey() != 1); // loop until user hits enter
-   // placeholder
+   while(DFRkeypad::GetKey() != 1);
+   // loop until user hits enter
    return;
 }
 
