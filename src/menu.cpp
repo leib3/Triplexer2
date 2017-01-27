@@ -184,6 +184,62 @@ void configMIDIChannel() {
   return;
 }
 
+void configINV()
+{
+  bool * invPtr;
+  static char param;
+  uint8_t keypress;
+  switch (selected) {
+     case 10:
+          param = 'X';
+          invPtr = &tpxSettings.xInv;
+          break;
+     case 14:
+          param = 'Y';
+          invPtr = &tpxSettings.yInv;
+             break;
+     case 18:
+          param = 'T';
+          invPtr = &tpxSettings.totInv;
+          break;
+  }
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("[INVERT PARAM]");
+  lcd.setCursor(15,0);
+  lcd.print(param);
+  do {
+    lcd.setCursor(1,1);
+    if (!*invPtr) {
+       lcd.print("NORMAL");
+    }
+    else {
+      lcd.print("INVERT");
+    }
+    keypress = DFRkeypad::GetKey();
+    if ((keypress == 2 /*up*/ || keypress == 3) && (!*invPtr)) {
+      *invPtr = true;  
+    }
+    else if ((keypress == 2 /*down*/ || keypress == 3) && (*invPtr)) {
+      *invPtr = false;
+    }
+  }
+  while (keypress != 1); // loop till user hits enter
+  lcd.setCursor(1,1);
+  lcd.print(param);
+  lcd.print(" ");
+  if (!*invPtr) {
+    lcd.print("NORMAL");
+  }
+  else {
+    lcd.print("INVERT");
+  }
+  lcd.print(" OK");
+  delay(1000); // allow user to see confirmation of parameter invert setting
+
+  return;
+}
+
 MenuEntry menu[] =
 {
    {menu_000, 3, 0, 0, 0, 0, 0}, // [Main Menu]   0
@@ -196,19 +252,19 @@ MenuEntry menu[] =
    {menu_103, 4, 5, 6, 16, 1, 0},               // 6
                                                   
    {menu_200, 4, 0, 0, 0, 0, 0}, // [Config X]     7
-   {menu_201, 4, 8, 9, 8, 4, configMIDIChannel},           // 8         
-   {menu_202, 4, 8, 10, 9, 4, configMIDICC},               // 9
-   {menu_203, 4, 9, 10, 10, 4, 0},              // 10
+   {menu_201, 4, 8, 9, 8, 4, configMIDIChannel},// 8         
+   {menu_202, 4, 8, 10, 9, 4, configMIDICC},    // 9
+   {menu_203, 4, 9, 10, 10, 4, configINV},     // 10
                                                  
    {menu_210, 4, 0, 0, 0, 0, 0}, // [Config Y]  // 11
-   {menu_211, 4, 12, 13, 12, 5, configMIDIChannel},             // 12
-   {menu_212, 4, 12, 14, 13, 5, configMIDICC},             // 13
-   {menu_213, 4, 13, 14, 14, 5, 0},             // 14
+   {menu_211, 4, 12, 13, 12, 5, configMIDIChannel},   // 12
+   {menu_212, 4, 12, 14, 13, 5, configMIDICC},        // 13
+   {menu_213, 4, 13, 14, 14, 5, configINV},           // 14
                                                  
    {menu_220, 4, 0, 0, 0, 0, 0},  // [Config TOT// 15
-   {menu_221, 4, 16, 17, 16, 6, configMIDIChannel},             // 16
-   {menu_222, 4, 16, 18, 17, 6, configMIDICC},             // 17
-   {menu_223, 4, 17, 18, 18, 6, 0}             // 18
+   {menu_221, 4, 16, 17, 16, 6, configMIDIChannel},   // 16
+   {menu_222, 4, 16, 18, 17, 6, configMIDICC},        // 17
+   {menu_223, 4, 17, 18, 18, 6, configINV}            // 18
 };
 
 void showMenu() {
