@@ -44,15 +44,20 @@ const char menu_301[] = "[X CC #]";           // 20
 //const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
 void configMIDICC() {
    static char param;
+   static uint8_t keypress; // not sure what best practice is here -- is static necessary in this case?
+   uint8_t * midiCCPtr;
    switch (selected) {
         case 9:
                 param = 'X';
+                midiCCPtr = &tpxSettings.xCCNum;
                 break;
         case 13:
                 param = 'Y';
+                midiCCPtr = &tpxSettings.yCCNum;
                 break;
         case 17:
                 param = 'T';
+                midiCCPtr = &tpxSettings.totCCNum;
                 break;
    }
    lcd.clear();
@@ -60,8 +65,48 @@ void configMIDICC() {
    lcd.print("[MIDI CC #]");
    lcd.setCursor(14,0);
    lcd.print(param);
-   while(DFRkeypad::GetKey() != 1);
-   // loop until user hits enter
+   do {
+      lcd.setCursor(1,1);
+      lcd.print(*midiCCPtr);
+      keypress = DFRkeypad::GetKey();
+      if (keypress == 2) {
+         if (*midiCCPtr == 127) { // up
+            *midiCCPtr = 1;
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("[MIDI CC #]");
+            lcd.setCursor(14,0);
+            lcd.print(param);
+         }
+         else {
+            ++(*midiCCPtr);
+         }
+      }
+      else if (keypress == 3) { // down
+         if (*midiCCPtr == 1) {
+            *midiCCPtr = 127;
+         }
+         else if (*midiCCPtr == 100 || *midiCCPtr == 10) {
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("[MIDI CC #]");
+            lcd.setCursor(14, 0);
+            lcd.print(param);
+            --(*midiCCPtr);
+         }
+         else {
+            --(*midiCCPtr);
+         }
+      }
+   }
+   while(keypress != 1); // loop until user hits enter
+
+   lcd.setCursor(1,1);
+   lcd.print("CC # ");
+   lcd.print(*midiCCPtr);
+   lcd.print(" OK");
+   delay(1000); // allow user time to see confirmation 
+   // of midi CC number
    return;
 }
 
@@ -129,12 +174,13 @@ void configMIDIChannel() {
      }
   }
   while(keypress != 1); // loop until user hits enter
-     lcd.setCursor(1,1);
-     lcd.print("Channel ");
-     lcd.print(*midiChPtr);
-     lcd.print(" OK");
-     delay(1000); // allow user time to see confirmation
-    // of MIDI channel 
+
+  lcd.setCursor(1,1);
+  lcd.print("Channel ");
+  lcd.print(*midiChPtr);
+  lcd.print(" OK");
+  delay(1000); // allow user time to see confirmation
+ // of MIDI channel 
   return;
 }
 
