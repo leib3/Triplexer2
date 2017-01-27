@@ -57,7 +57,7 @@ void configMIDICC() {
    }
    lcd.clear();
    lcd.setCursor(0,0);
-   lcd.print("[MIDI CHNL #]");
+   lcd.print("[MIDI CC #]");
    lcd.setCursor(14,0);
    lcd.print(param);
    while(DFRkeypad::GetKey() != 1);
@@ -67,22 +67,29 @@ void configMIDICC() {
 
 void configMIDIChannel() {
   static char param;
+  uint8_t * midiChPtr;
   switch (selected) {
      case 8:
              param = 'X';
+             midiChPtr = &tpxSettings.xChannelNum;
              break;
      case 12:
              param = 'Y';
+             midiChPtr = &tpxSettings.yChannelNum;
              break;
      case 16:
              param = 'T';
+             midiChPtr = &tpxSettings.totChannelNum;
              break;
   }
+
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("[MIDI CC #]");
+  lcd.print("[MIDI CHNL #]");
   lcd.setCursor(14,0);
   lcd.print(param);
+  lcd.setCursor(1,1);
+  lcd.print(*midiChPtr);
   while(DFRkeypad::GetKey() != 1); // loop until user hits enter
    // placeholder
   return;

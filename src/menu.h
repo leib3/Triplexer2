@@ -15,7 +15,7 @@ typedef const struct MenuStruct
 // debugging purposes. There will be a single instance of this
 // struct that is shared by both the menu and the load cell
 // input processing module (TODO)
-typedef struct settingsStruct
+struct settingsStruct
 {
    uint8_t xCCNum;
    uint8_t xChannelNum;
@@ -26,7 +26,20 @@ typedef struct settingsStruct
    bool xInv;
    bool yInv;
    bool totInv;
-} tpxSettings;
+};
+
+// initialize settingsStruct with default MIDI settings
+static settingsStruct tpxSettings = {
+        .xCCNum = 1, 
+        .xChannelNum = 1, 
+        .yCCNum = 1, 
+        .yChannelNum = 1,
+        .totCCNum = 1, 
+        .totChannelNum = 1,
+        .xInv = false, 
+        .yInv = false,
+        .totInv = false
+   };
 
 void browseMenu();
 
