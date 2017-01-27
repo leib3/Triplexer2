@@ -29,6 +29,7 @@ struct settingsStruct
 };
 
 // initialize settingsStruct with default MIDI settings
+// declared static to avoid multiple definition linker error
 static settingsStruct tpxSettings = {
         .xCCNum = 1, 
         .xChannelNum = 1, 

@@ -67,6 +67,7 @@ void configMIDICC() {
 
 void configMIDIChannel() {
   static char param;
+  static uint8_t keypress;
   uint8_t * midiChPtr;
   switch (selected) {
      case 8:
@@ -88,16 +89,58 @@ void configMIDIChannel() {
   lcd.print("[MIDI CHNL #]");
   lcd.setCursor(14,0);
   lcd.print(param);
-  lcd.setCursor(1,1);
-  lcd.print(*midiChPtr);
-  while(DFRkeypad::GetKey() != 1); // loop until user hits enter
-   // placeholder
+  do {
+     lcd.setCursor(1,1);
+     lcd.print(*midiChPtr);
+     keypress = DFRkeypad::GetKey();
+     if (keypress == 2) { // up
+   // accounting for when *midiChPtr goes from
+   // two digits to one digit in length -- second
+   // digit persists on LCD unless we redraw the
+   // screen entirely. Not elegant, but works for 
+   // now
+        if (*midiChPtr == 16) {
+           *midiChPtr = 1;
+           lcd.clear();
+           lcd.setCursor(0,0);
+           lcd.print("[MIDI CHNL #]");
+           lcd.setCursor(14,0);
+           lcd.print(param);
+        } 
+        else {
+          ++(*midiChPtr);
+        }
+     }
+     else if (keypress == 3) { // down
+       if (*midiChPtr == 1) {
+         *midiChPtr = 16;
+       }
+       else if (*midiChPtr == 10) {
+           lcd.clear();
+           lcd.setCursor(0,0);
+           lcd.print("[MIDI CHNL #]");
+           lcd.setCursor(14,0);
+           lcd.print(param);
+           --(*midiChPtr);
+       }
+       else {
+         --(*midiChPtr);
+       }
+     }
+  }
+  while(keypress != 1); // loop until user hits enter
+     lcd.setCursor(1,1);
+     lcd.print("Channel ");
+     lcd.print(*midiChPtr);
+     lcd.print(" OK");
+     delay(1000); // allow user time to see confirmation
+    // of MIDI channel 
   return;
 }
 
 MenuEntry menu[] =
 {
-   {menu_000, 3, 0, 0, 0, 0, 0}, // [Main Menu]]   0
+   {menu_000, 3, 0, 0, 0, 0, 0}, // [Main Menu]   0
    {menu_001, 3, 1, 2, 4, 1, 0},                // 1
    {menu_002, 3, 1, 2, 2, 1, 0},                // 2
                                                   
@@ -135,9 +178,14 @@ void showMenu() {
    --to;
    
    //temp = from; temp is used for screens with more than two rows
-   lcd.clear(); // the LCD being cleared and redrawn on each
+   lcd.clear();
+   // the LCD being cleared and redrawn on each
    // iteration of the loop is responsible for the flicker. 
-   // I need to do this in a more intelligent way.
+   // We need to do this in a more intelligent way, because the
+   // flicker is incredibly annoying. Using separate buttons
+   // that we can connect to digital GPIO pins would allow us to
+   // use interrupts, meaning we would only have to redraw the 
+   // screen on an interrupt.
    
    if ( (selected < (from + 2)) ) {
       to = from + 1;
@@ -179,6 +227,8 @@ void browseMenu() {
    uint8_t key = DFRkeypad::GetKey();
    strcpy(buffer, DFRkeypad::KeyName(key));
    Serial.print("*  key: ");
+   Serial.print(analogRead(A8));
+   Serial.print(" ");
    Serial.println(buffer);
 
    if (!strcmp(buffer, DFRkeypad::sKEY[2])) { // up
