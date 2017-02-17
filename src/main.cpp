@@ -9,16 +9,21 @@
 //LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 //static int * raw;
 const int channel = 1;
+
+//display macros
 #define btnRIGHT  0
 #define btnUP     1
 #define btnDOWN   2
 #define btnLEFT   3
 #define btnSELECT 4
 #define btnNONE   5  
+
+//adc macros
 #define NUMAVG    4   //amount of hardware averaging
 #define ADCBITS   16  //bit depth of samples from adc
 #define SAMPLERATE 1  //in Hz. Currently set really slow for debugging.
 
+//adc pin defs
 const int readPinUL = A0; // uses ADC0
 const int readPinUR = A1; // uses ADC0
 const int readPinLL = A2; // uses ADC1
@@ -73,8 +78,14 @@ void  init() {
    Serial.println("Hello from outside Arduino!");
 	pinMode(13, OUTPUT);
    digitalWriteFast(13, HIGH);
+   //lcd.begin(16,2);
+   //usbMIDI.sendNoteOn(60, 99, channel);
+   //usbMIDI.sendControlChange(5, 50, channel);
+   //raw = (int *)malloc(sizeof(int));
+}
 
-
+void adcinit(){
+    ADC * adc = &myAdc;
 //ADC initialization
     pinMode(readPinUL, INPUT);
     pinMode(readPinUR, INPUT);
@@ -131,12 +142,11 @@ void  init() {
     // If you enable interrupts, note that the isr will read the result, so that isComplete() will return false (most of the time)
     adc->enableInterrupts(ADC_1);
 
+}
 
-    Serial.println("End setup");
-   //lcd.begin(16,2);
-  // usbMIDI.sendNoteOn(60, 99, channel);
-  // usbMIDI.sendControlChange(5, 50, channel);
-   //raw = (int *)malloc(sizeof(int));
+void timerinit(){
+   sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
+   sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
 }
 
 
@@ -144,11 +154,8 @@ extern "C" int main()
 {
 
     ADC *adc = &myAdc;
-	// To use Teensy 3.0 without Arduino, simply put your code here.
-	// For example:
    init();
-   sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
-   sampleTimer.priority(20);
+   adcinit();
    while (1) {
       /*browseMenu();
       if (usbMIDI.read() != 0) {
