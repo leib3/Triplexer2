@@ -15,8 +15,8 @@ const int channel = 1;
 #define btnLEFT   3
 #define btnSELECT 4
 #define btnNONE   5  
-#define NUMAVG    4
-#define ADCBITS   16
+#define NUMAVG    4   //amount of hardware averaging
+#define ADCBITS   16  //bit depth of samples from adc
 #define SAMPLERATE 1  //in Hz. Currently set really slow for debugging.
 
 const int readPinUL = A0; // uses ADC0
@@ -150,9 +150,6 @@ extern "C" int main()
    sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
    sampleTimer.priority(20);
    while (1) {
-
-
-    delayMicroseconds(1000000);
       /*browseMenu();
       if (usbMIDI.read() != 0) {
          Serial.print("Rcvd type ");
