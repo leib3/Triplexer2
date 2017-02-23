@@ -2,10 +2,11 @@
 #include "menu.h"
 #include "ADC.h"
 #include "IntervalTimer.h"
+#include "trip_osc.h"
 
 
 
-               // RS, E, D4, D5, D6, D7
+// RS, E, D4, D5, D6, D7
 //LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 //static int * raw;
 const int channel = 1;
@@ -51,7 +52,7 @@ void sampleTimer_isr(){
 
 //these adc isr's will either read the left value, then start the right value read, or
 //on the subsequent time, only read the right value
-//they are designed to work with a timer interrupt.
+//they are designed to work with a separate timer interrupt.
 void adc0_isr(){
    if(adc0_state == 0){
       adc0_state += 1;
@@ -152,10 +153,12 @@ void timerinit(){
 
 extern "C" int main() 
 {
-
+   float myval = 0.0;
     ADC *adc = &myAdc;
    init();
    adcinit();
+   oscinit();
+   timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
    while (1) {
       /*browseMenu();
       if (usbMIDI.read() != 0) {
@@ -164,6 +167,9 @@ extern "C" int main()
          Serial.print("MIDI channel ");
          Serial.println(usbMIDI.getChannel());
       } */
+   delayMicroseconds(1000000);
+   oscsend(myval);
+   myval+=1.0;
    } 
 }
 
