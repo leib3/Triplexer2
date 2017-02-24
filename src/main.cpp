@@ -39,7 +39,6 @@ void  init() {
 extern "C" int main() 
 {
    float myval = 0.0;
-    ADC *adc = &myAdc;
    init();
    adcinit();
    oscinit();
