@@ -84,11 +84,14 @@ void sampleTimer_isr(){
    adc0_state = 0;
    adc1_state = 0;
    //this should change to output values instead of printing them.
+/*
+   Serial.print("\n\r");
    Serial.println(ul);
    Serial.println(ur);
    Serial.println(ll);
    Serial.println(lr);
    Serial.print("\n\r");
+*/
    myAdc.startSingleRead(readPinUL, ADC_0);
    myAdc.startSingleRead(readPinLL, ADC_1);
 }

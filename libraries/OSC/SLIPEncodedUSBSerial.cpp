@@ -25,10 +25,21 @@ SLIPEncodedUSBSerial::SLIPEncodedUSBSerial(
 	rstate = CHAR;
 }
 
+
+//Steve's note: these original ones are octal values. Why? When I try decimal values, they work, too. I don't see 
+//conversion happening anywhere, but the raw input from comport in pd shows these as the correct values...
 static const uint8_t eot = 0300;
 static const uint8_t slipesc = 0333;
 static const uint8_t slipescend = 0334;
 static const uint8_t slipescesc = 0335;
+
+/*
+static const uint8_t eot = 192;
+static const uint8_t slipesc = 219;
+static const uint8_t slipescend = 220;
+static const uint8_t slipescesc = 221;
+*/
+
 /*
  SERIAL METHODS
  */
