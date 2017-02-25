@@ -38,7 +38,7 @@ void  init() {
 
 extern "C" int main() 
 {
-   float myval = 0.0;
+   short myval = 7;
    init();
    adcinit();
    oscinit();
@@ -52,8 +52,8 @@ extern "C" int main()
          Serial.println(usbMIDI.getChannel());
       } */
    delayMicroseconds(1000000);
-   oscsend(myval);
-   myval+=1.0;
+   //oscsend1(myval);
+   oscsend4(1, 2, 3, 4);
    } 
 }
 

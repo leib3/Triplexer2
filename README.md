@@ -4,31 +4,12 @@
 **In `OPTIONS` in the Makefile, replace `-DUSB_SERIAL` with `-DUSB_MIDI_SERIAL` to
 enable USB MIDI and serial simultaneously.**
 
-STEVE, DANIEL, and MATT:
-These directions below walk you through the template I have used for the triplexer project.
-This setup allows you to work with the entire Teensy codebase at your fingertips, which is 
-something the Arduino IDE prevents you from doing. There is nothing stopping you from using an IDE
-but it will take a considerable amount of time to setup. If you're at all familiar with makefiles,
-the instructions below should be pretty straightfoward. Otherwise, you're going to need to do some
-reading. Basically, you'll notice a file called `Makefile` in the triplexer directory. The creator of
-the Teensy template, apmorton, wrote it. What it does is handle the actual compilation of the entire
-codebase  in an efficient way -- in particular, each time you type `make` in a terminal in the triplexer 
-directory, only source files you have modified and other source files that depend on those modified files
-are recompiled, saving time. 
-### Git
-Now about git itself. Two links follow. The first 
-is a "quick and dirty" introduction to git commands, and the second is a link to the official git document-
-ation. I would strongly suggest you read the first 2-3 chapters of the git documentation. Note that if you
-would prefer to abstract away the command-line usage of git that there are graphical front-ends around, but
-you'll have to do some googling. 
 
-1. (http://rogerdudler.github.io/git-guide/)
-2. (https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control)
+OSC NOTE:
+Here is a working OSC implementation for our project. Use the function oscsend4 to send 4 integer values over open sound control.
+I am using the naming convention ul, ur, ll, lr for"upper left, upper right,  lower left, lower right. That is consistent with 
+the adc names, also. Our OSC output currently uses /teensy/ul, ... as the OSC tag.
 
-**IMPORTANT NOTE:** the code I've written is in the `src` folder!
-
-Some decent introductory material on Makefiles:
-(http://matt.might.net/articles/intro-to-make/)
 
 **The instructions below are from the teensy template github page: (https://github.com/apmorton/teensy-template)**
 

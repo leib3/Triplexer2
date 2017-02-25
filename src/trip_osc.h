@@ -9,5 +9,5 @@ Make an OSC message and send it over serial
 
 
 void oscinit();
-void oscsend(float value);
-
+void oscsend1(unsigned short value); //sends 16 bit unsigned value
+void oscsend4(unsigned short ul, unsigned short ur, unsigned short ll, unsigned short lr);
