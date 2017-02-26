@@ -22,7 +22,7 @@ void oscinit() {
 }
 
 
-void oscsend(unsigned short value){
+void oscsend1(unsigned short value){
   //the message wants an OSC address as first argument
   OSCMessage msg("/teensy/helloworld");
   msg.add(value);
@@ -31,6 +31,20 @@ void oscsend(unsigned short value){
   SLIPSerial.endPacket(); // mark the end of the OSC Packet
   msg.empty(); // free space occupied by message
 }
+
+void oscsend3(unsigned short x, unsigned short y, unsigned short t){
+    OSCBundle myBundle;
+    //OSCBundle's add' returns the OSCMessage so the message's 'add' can be composed together
+    myBundle.add("/teensy/x").add((int32_t)x);
+    myBundle.add("/teensy/y").add((int32_t)y);
+    myBundle.add("/teensy/t").add((int32_t)t);
+
+    SLIPSerial.beginPacket();
+        myBundle.send(SLIPSerial); // send the bytes to the SLIP stream
+    SLIPSerial.endPacket(); // mark the end of the OSC Packet
+    myBundle.empty(); // empty the bundle to free room for a new one
+}
+
 
 void oscsend4(unsigned short ul, unsigned short ur, unsigned short ll, unsigned short lr){
     OSCBundle myBundle;

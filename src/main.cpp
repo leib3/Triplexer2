@@ -38,7 +38,6 @@ void  init() {
 
 extern "C" int main() 
 {
-   short myval = 7;
    init();
    adcinit();
    oscinit();
@@ -53,7 +52,7 @@ extern "C" int main()
       } */
    delayMicroseconds(1000000);
    //oscsend1(myval);
-   oscsend4(1, 2, 3, 4);
+   oscsend3(1, 2, 3);
    } 
 }
 
