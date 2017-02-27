@@ -28,12 +28,14 @@ void init() {
    Serial.begin(9600);
    Serial.println("Hello from outside Arduino!");
 	pinMode(13, OUTPUT);
+   pinMode(0, INPUT);
    digitalWriteFast(13, HIGH);
    lcd.begin(16,2);
-  // attachInterrupt(A8, ISRtest, CHANGE);
+   //attachInterrupt(0, ISRtest, CHANGE);
   // usbMIDI.sendNoteOn(60, 99, channel);
   // usbMIDI.sendControlChange(5, 50, channel);
    //raw = (int *)malloc(sizeof(int));
+   showMenu();
 }
 
 

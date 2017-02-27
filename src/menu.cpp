@@ -322,16 +322,15 @@ void showMenu() {
 }
 
 void browseMenu() {
-   
-   showMenu();
    static char buffer[15];
-
    uint8_t key = DFRkeypad::GetKey();
    strcpy(buffer, DFRkeypad::KeyName(key));
-   Serial.print("*  key: ");
-   Serial.print(analogRead(A8));
-   Serial.print(" ");
-   Serial.println(buffer);
+
+//   Serial.print("*  key: ");
+//   Serial.print(analogRead(A8));
+//   Serial.print(" ");
+//   Serial.println(buffer);
+
 
    if (!strcmp(buffer, DFRkeypad::sKEY[2])) { // up
      selected = menu[selected].up;
@@ -348,5 +347,11 @@ void browseMenu() {
       }
       selected = menu[selected].enter;
    }
+   if (!strcmp(buffer, DFRkeypad::sKEY[0])) {
+      return;
+   }
+   else {
+      showMenu(); // only redraw menu if a keypress is detected
+  }
 }
 
