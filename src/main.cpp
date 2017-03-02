@@ -3,11 +3,12 @@
 #include "ADC.h"
 #include "IntervalTimer.h"
 #include "LiquidCrystal.h"
+#include "trip_osc.h"
 #include "trip_adc.h"
 
 
 
-               // RS, E, D4, D5, D6, D7
+// RS, E, D4, D5, D6, D7
 //LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 //static int * raw;
 const int channel = 1;
@@ -21,8 +22,6 @@ LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 #define btnLEFT   3
 #define btnSELECT 4
 #define btnNONE   5  
-
-
 
 
 
@@ -45,10 +44,10 @@ void  init() {
 
 extern "C" int main() 
 {
-
    init();
    adcinit();
-   timerinit();
+   oscinit();
+   timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
    while (1) {
       /*browseMenu();
       if (usbMIDI.read() != 0) {
@@ -57,6 +56,8 @@ extern "C" int main()
          Serial.print("MIDI channel ");
          Serial.println(usbMIDI.getChannel());
       } */
+   delayMicroseconds(1000000);
+
    } 
 }
 
