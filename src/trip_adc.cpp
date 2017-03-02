@@ -1,4 +1,5 @@
 #include "trip_adc.h"
+#include "trip_osc.h"
 
 
 
@@ -7,6 +8,8 @@ const int readPinUL = A0; // uses ADC0
 const int readPinUR = A1; // uses ADC0
 const int readPinLL = A2; // uses ADC1
 const int readPinLR = A3; // uses ADC1
+
+int z_ul, z_ur, z_ll, z_lr; //store zero values
 
 ADC myAdc;
 IntervalTimer sampleTimer;
@@ -54,7 +57,7 @@ void adcinit(){
     //adc->enableCompareRange(3.3*adc->getMaxValue(ADC_0)/3.3, 2.0*adc->getMaxValue(ADC_0)/3.3, 0, 1, ADC_0); // ready if value lies out of [1.0,2.0] V
 
     // If you enable interrupts, notice that the isr will read the result, so that isComplete() will return false (most of the time)
-    adc->enableInterrupts(ADC_0);
+
 
 
     ////// ADC1 /////
@@ -70,7 +73,16 @@ void adcinit(){
     //adc->enableCompareRange(1.0*adc->getMaxValue(ADC_1)/3.3, 2.0*adc->getMaxValue(ADC_1)/3.3, 0, 1, ADC_1); // ready if value lies out of [1.0,2.0] V
 
 
+//get zeros here before interrupts are enabled.
+
+    z_ul = adc->analogRead(readPinUL, 0);
+    z_ur = adc->analogRead(readPinUR, 0);
+    z_ll = adc->analogRead(readPinLL, 1);
+    z_lr = adc->analogRead(readPinLR, 1);
+
+
     // If you enable interrupts, note that the isr will read the result, so that isComplete() will return false (most of the time)
+    adc->enableInterrupts(ADC_0);
     adc->enableInterrupts(ADC_1);
 
 }
@@ -84,12 +96,25 @@ void sampleTimer_isr(){
    adc0_state = 0;
    adc1_state = 0;
    //this should change to output values instead of printing them.
+   //output OSC
+   int x, y, t, ul_norm, ur_norm, ll_norm, lr_norm, t_norm;
+   int weight = 127;
+   int max_weight = 600;
+   ul_norm = (int)ul-z_ul > 0 ? ul-z_ul: 0;
+   ur_norm = (int)ur-z_ur > 0 ? ur-z_ur: 0;
+   ll_norm = (int)ll-z_ll > 0 ? ll-z_ll: 0;
+   lr_norm = (int)lr-z_lr > 0 ? lr-z_lr: 0;
+   t_norm = ul_norm + ur_norm + ll_norm + lr_norm;
+   x = (ur_norm + lr_norm) * weight / t_norm;
+   y = (ul_norm + ur_norm) * weight / t_norm;
+   t = (t_norm)/max_weight;
+   oscsend3(x, y, t);
 /*
    Serial.print("\n\r");
-   Serial.println(ul);
-   Serial.println(ur);
-   Serial.println(ll);
-   Serial.println(lr);
+   Serial.println( ul_norm);
+   Serial.println( ur_norm);
+   Serial.println(ll_norm);
+   Serial.println( lr_norm);
    Serial.print("\n\r");
 */
    myAdc.startSingleRead(readPinUL, ADC_0);

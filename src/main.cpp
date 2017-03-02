@@ -51,8 +51,7 @@ extern "C" int main()
          Serial.println(usbMIDI.getChannel());
       } */
    delayMicroseconds(1000000);
-   //oscsend1(myval);
-   oscsend3(1, 2, 3);
+
    } 
 }
 

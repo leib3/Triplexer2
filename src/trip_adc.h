@@ -4,7 +4,7 @@
 //adc macros
 #define NUMAVG    4   //amount of hardware averaging
 #define ADCBITS   16  //bit depth of samples from adc
-#define SAMPLERATE 1  //in Hz. Currently set really slow for debugging.
+#define SAMPLERATE 100  //in Hz. Currently set really slow for debugging.
 
 
 void adcinit();
