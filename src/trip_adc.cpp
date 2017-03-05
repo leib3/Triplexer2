@@ -1,6 +1,6 @@
 #include "trip_adc.h"
 #include "trip_osc.h"
-
+#include "WProgram.h"
 
 
 //adc pin defs
@@ -9,14 +9,15 @@ const int readPinUR = A1; // uses ADC0
 const int readPinLL = A2; // uses ADC1
 const int readPinLR = A3; // uses ADC1
 
-int z_ul, z_ur, z_ll, z_lr; //store zero values
+
+volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
+static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
+static int w_ul, w_ur, w_ll, w_lr; //store corner weights based on max values in calibration
+volatile int adc0_state, adc1_state;   //state used in adc isr's
 
 ADC myAdc;
 IntervalTimer sampleTimer;
 
-
-volatile int adc0_state, adc1_state;   //state used in adc isr's
-volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
 
 void adcinit(){
     ADC * adc = &myAdc;
@@ -73,15 +74,8 @@ void adcinit(){
     //adc->enableCompareRange(1.0*adc->getMaxValue(ADC_1)/3.3, 2.0*adc->getMaxValue(ADC_1)/3.3, 0, 1, ADC_1); // ready if value lies out of [1.0,2.0] V
 
 
-//get zeros here before interrupts are enabled.
-
-    z_ul = adc->analogRead(readPinUL, 0);
-    z_ur = adc->analogRead(readPinUR, 0);
-    z_ll = adc->analogRead(readPinLL, 1);
-    z_lr = adc->analogRead(readPinLR, 1);
-
-
     // If you enable interrupts, note that the isr will read the result, so that isComplete() will return false (most of the time)
+    //also note you can't use the basic blocking analogRead function without disabling interrupts first.
     adc->enableInterrupts(ADC_0);
     adc->enableInterrupts(ADC_1);
 
@@ -92,24 +86,128 @@ void timerinit(){
    sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
 }
 
+//called by adcCalibrate
+void calibrateZero(void){
+    unsigned int m_ul, m_ur, m_ll, m_lr;
+    m_ul = m_ur = m_ll = m_lr = 0;
+    for(int i = 0; i<256; i++){
+       m_ul += myAdc.analogRead(A0);
+       m_ur += myAdc.analogRead(A1);
+       m_ll += myAdc.analogRead(A2);
+       m_lr += myAdc.analogRead(A3);
+       delayMicroseconds(3910);  // =  3.91 ms   (*256 = 1 second)
+    }
+    z_ul = m_ul >> 8;
+    z_ur = m_ur >> 8;
+    z_ll = m_ll >> 8;
+    z_lr = m_lr >> 8;
+}
+
+//called by adcCalibrate
+void calibrateMax(void){
+    int m_ul, m_ur, m_ll, m_lr;
+    m_ul = m_ur = m_ll = m_lr = 0;
+    for(int i = 0; i<256; i++){
+       m_ul += myAdc.analogRead(A0);
+       m_ur += myAdc.analogRead(A1);
+       m_ll += myAdc.analogRead(A2);
+       m_lr += myAdc.analogRead(A3);
+       delayMicroseconds(3910);  // =  3.91 ms   (*256 = 1 second)
+    }
+//now we have an average of sorts for each corner. Use these to set max total weight, 
+//and individual weights for weighted avgs of corners
+    w_ul = (1<<15) / ((m_ul>>8) - z_ul); 
+    w_ul = w_ul < 1 ? 1 : w_ul;
+    w_ur = (1<<15) / ((m_ur>>8) - z_ur);
+    w_ur = w_ur < 1 ? 1 : w_ur;
+    w_ll = (1<<15) / ((m_ll>>8) - z_ll);
+    w_ll = w_ll < 1 ? 1 : w_ll;
+    w_lr = (1<<15) / ((m_lr>>8) - z_lr);
+    w_lr = w_lr < 1 ? 1 : w_lr;
+}
+
+
+void adcCalibrate(){
+//using LED indication for now. Use display later?
+    //turn off interrupts for timer and adc
+    myAdc.disableInterrupts(ADC_0);
+    myAdc.disableInterrupts(ADC_1);
+    sampleTimer.end();
+    //LED on
+    pinMode(13, OUTPUT);
+    digitalWriteFast(13, HIGH);
+    calibrateZero();
+    //LED off
+    digitalWriteFast(13, LOW);
+    //wait 1 second
+    delayMicroseconds(1000000);
+    //LED on
+    digitalWriteFast(13, HIGH);
+    //wait 1 second
+    delayMicroseconds(1000000);
+    calibrateMax();
+    //LED off
+    digitalWriteFast(13, LOW);
+    //turn on interrupts for timer and adc
+
+//print values for debugging
+    Serial.println("z_ul = ");
+    Serial.println(z_ul);
+    Serial.println("w_ul = ");
+    Serial.println(w_ul);
+
+    Serial.println("z_ur = ");
+    Serial.println(z_ur);
+    Serial.println("w_ur = ");
+    Serial.println(w_ur);
+
+    Serial.println("z_ll = ");
+    Serial.println(z_ll);
+    Serial.println("w_ll = ");
+    Serial.println(w_ll);
+
+    Serial.println("z_lr = ");
+    Serial.println(z_lr);
+    Serial.println("w_lr = ");
+    Serial.println(w_lr);
+
+    myAdc.enableInterrupts(ADC_0);
+    myAdc.enableInterrupts(ADC_1);
+    timerinit();
+    return;
+}
+
+
 void sampleTimer_isr(){
+   if(adc1_state == 1){
    adc0_state = 0;
    adc1_state = 0;
-   //this should change to output values instead of printing them.
-   //output OSC
-   int x, y, t, ul_norm, ur_norm, ll_norm, lr_norm, t_norm;
-   int weight = 127;
-   int max_weight = 600;
-   ul_norm = (int)ul-z_ul > 0 ? ul-z_ul: 0;
+   //TODO this should change to check output format for each of x, y, t
+   //and call appropriate output functions
+   //calculate 16-bit values-put this in a function!
+   unsigned int x, y, t, ul_norm, ur_norm, ll_norm, lr_norm, t_norm;
+   int lshiftamt = 16;  //(multiplier = 2^lshiftamt)
+   ul_norm = (int)ul-z_ul > 0 ? ul-z_ul: 0;  //norm values will always be less than 2^16
    ur_norm = (int)ur-z_ur > 0 ? ur-z_ur: 0;
    ll_norm = (int)ll-z_ll > 0 ? ll-z_ll: 0;
    lr_norm = (int)lr-z_lr > 0 ? lr-z_lr: 0;
-   t_norm = ul_norm + ur_norm + ll_norm + lr_norm;
-   x = (ur_norm + lr_norm) * weight / t_norm;
-   y = (ul_norm + ur_norm) * weight / t_norm;
-   t = (t_norm)/max_weight;
-   oscsend3(x, y, t);
+   t_norm = w_ul*ul_norm + w_ur*ur_norm + w_ll*ll_norm + w_lr*lr_norm;
+   if (t_norm == 0) t_norm = 1; //avoid divde by 0
+   x = ((w_ur*ur_norm + w_lr*lr_norm) << lshiftamt) / t_norm;
+   x = x >= (1<<16) ? (1<<16)-1 : x;  //prevents x from being larger than the guaranteed max value of 2^16 -1.
+   y = ((w_ul*ul_norm + w_ur*ur_norm) << lshiftamt) / t_norm;
+   y = y >= (1<<16) ? (1<<16)-1 : y;  //prevents y from being larger than the guaranteed max value of 2^16 -1.
+   t = (t_norm)>>1; // = max t_norm = 2^17. l shift amt - 2^16. t = (t_norm/max t_norm)<<lshiftamt = t_norm >> 1;
+   t = t >= (1<<16) ? (1<<16)-1 : t;  //prevents t from being larger than the guaranteed max value of 2^16 -1.
+//output to osc, midi, or midi over usb
+   //oscsend3(x, y, t);
 /*
+   //print values for debugging
+   Serial.print("\n\r");
+   Serial.println( ul);
+   Serial.println( ur);
+   Serial.println(ll);
+   Serial.println( lr);
    Serial.print("\n\r");
    Serial.println( ul_norm);
    Serial.println( ur_norm);
@@ -117,6 +215,7 @@ void sampleTimer_isr(){
    Serial.println( lr_norm);
    Serial.print("\n\r");
 */
+   }
    myAdc.startSingleRead(readPinUL, ADC_0);
    myAdc.startSingleRead(readPinLL, ADC_1);
 }
@@ -124,7 +223,7 @@ void sampleTimer_isr(){
 
 //these adc isr's will either read the left value, then start the right value read, or
 //on the subsequent time, only read the right value
-//they are designed to work with a timer interrupt.
+//they are designed to work with a separate timer interrupt, which starts the first read.
 void adc0_isr(){
    if(adc0_state == 0){
       adc0_state += 1;
