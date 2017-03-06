@@ -1,6 +1,8 @@
 #include "menu.h"
 #include "LiquidCrystal.h"
 #include "DFRkeypad.h"
+#include "Bounce2.h"
+
 
 unsigned char selected = 1;
 extern LiquidCrystal lcd; // lcd object is declared in main.cpp
@@ -42,10 +44,51 @@ const char menu_301[] = "[X CC #]";           // 20
 // we can infer which parameter is being configured based on 
 // the value of 'selected'. 
 //const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
+//
+   Bounce back = Bounce();
+   Bounce up = Bounce();
+   Bounce down = Bounce();
+   Bounce enter = Bounce();
+
+void debounceInit() {
+
+   back.attach(BACK);
+   back.interval(20);
+
+   up.attach(UP);
+   up.interval(20);
+
+   down.attach(DOWN);
+   down.interval(20);
+   enter.attach(ENTER);
+   enter.interval(20); return;
+}
+
+int getButtonPress() {
+   enter.update();
+   up.update();
+   down.update();
+   back.update();
+
+   if (enter.fell()){
+      return ENTER;
+   }
+   else if (up.fell()) {
+      return UP;
+   }
+   else if (down.fell()) {
+      return DOWN;
+   }
+   else if (back.fell()) {
+      return BACK;
+
+   }
+   else return -1; // no button press detected
+}
 void configMIDICC() {
    static char param;
-   static uint8_t keypress; // not sure what best practice is here -- is static necessary in this case?
    uint8_t * midiCCPtr;
+   int keypress;
    switch (selected) {
         case 9:
                 param = 'X';
@@ -66,11 +109,11 @@ void configMIDICC() {
    lcd.setCursor(14,0);
    lcd.print(param);
    do {
+      keypress = getButtonPress();
       lcd.setCursor(1,1);
       lcd.print(*midiCCPtr);
-      keypress = DFRkeypad::GetKey();
-      if (keypress == 2) {
-         if (*midiCCPtr == 127) { // up
+      if (keypress == UP) {
+         if (*midiCCPtr == 127) { 
             *midiCCPtr = 1;
             lcd.clear();
             lcd.setCursor(0,0);
@@ -82,7 +125,7 @@ void configMIDICC() {
             ++(*midiCCPtr);
          }
       }
-      else if (keypress == 3) { // down
+      else if (keypress == DOWN) { 
          if (*midiCCPtr == 1) {
             *midiCCPtr = 127;
          }
@@ -99,7 +142,7 @@ void configMIDICC() {
          }
       }
    }
-   while(keypress != 1); // loop until user hits enter
+   while(keypress != ENTER); // loop until user hits enter
 
    lcd.setCursor(1,1);
    lcd.print("CC # ");
@@ -112,8 +155,8 @@ void configMIDICC() {
 
 void configMIDIChannel() {
   static char param;
-  static uint8_t keypress;
   uint8_t * midiChPtr;
+  int keypress;
   switch (selected) {
      case 8:
              param = 'X';
@@ -135,10 +178,10 @@ void configMIDIChannel() {
   lcd.setCursor(14,0);
   lcd.print(param);
   do {
+     keypress = getButtonPress();
      lcd.setCursor(1,1);
      lcd.print(*midiChPtr);
-     keypress = DFRkeypad::GetKey();
-     if (keypress == 2) { // up
+     if (keypress == UP) { // up
    // accounting for when *midiChPtr goes from
    // two digits to one digit in length -- second
    // digit persists on LCD unless we redraw the
@@ -156,7 +199,7 @@ void configMIDIChannel() {
           ++(*midiChPtr);
         }
      }
-     else if (keypress == 3) { // down
+     else if (keypress == DOWN) { // down
        if (*midiChPtr == 1) {
          *midiChPtr = 16;
        }
@@ -173,7 +216,7 @@ void configMIDIChannel() {
        }
      }
   }
-  while(keypress != 1); // loop until user hits enter
+  while(keypress != ENTER); // loop until user hits enter
 
   lcd.setCursor(1,1);
   lcd.print("Channel ");
@@ -188,7 +231,7 @@ void configINV()
 {
   bool * invPtr;
   static char param;
-  uint8_t keypress;
+  int keypress;
   switch (selected) {
      case 10:
           param = 'X';
@@ -209,6 +252,7 @@ void configINV()
   lcd.setCursor(15,0);
   lcd.print(param);
   do {
+    keypress = getButtonPress();
     lcd.setCursor(1,1);
     if (!*invPtr) {
        lcd.print("NORMAL");
@@ -216,11 +260,10 @@ void configINV()
     else {
       lcd.print("INVERT");
     }
-    keypress = DFRkeypad::GetKey();
-    if ((keypress == 2 /*up*/ || keypress == 3) && (!*invPtr)) {
+    if ((keypress == UP /*up*/ || keypress == DOWN) && (!*invPtr)) {
       *invPtr = true;  
     }
-    else if ((keypress == 2 /*down*/ || keypress == 3) && (*invPtr)) {
+    else if ((keypress == UP /*down*/ || keypress == DOWN) && (*invPtr)) {
       *invPtr = false;
     }
   }
@@ -281,13 +324,6 @@ void showMenu() {
    
    //temp = from; temp is used for screens with more than two rows
    lcd.clear();
-   // the LCD being cleared and redrawn on each
-   // iteration of the loop is responsible for the flicker. 
-   // We need to do this in a more intelligent way, because the
-   // flicker is incredibly annoying. Using separate buttons
-   // that we can connect to digital GPIO pins would allow us to
-   // use interrupts, meaning we would only have to redraw the 
-   // screen on an interrupt.
    
    if ( (selected < (from + 2)) ) {
       to = from + 1;
@@ -322,15 +358,11 @@ void showMenu() {
 }
 
 void browseMenu() {
+
+#ifdef DFRKEYPAD
    static char buffer[15];
    uint8_t key = DFRkeypad::GetKey();
    strcpy(buffer, DFRkeypad::KeyName(key));
-
-//   Serial.print("*  key: ");
-//   Serial.print(analogRead(A8));
-//   Serial.print(" ");
-//   Serial.println(buffer);
-
 
    if (!strcmp(buffer, DFRkeypad::sKEY[2])) { // up
      selected = menu[selected].up;
@@ -353,5 +385,34 @@ void browseMenu() {
    else {
       showMenu(); // only redraw menu if a keypress is detected
   }
+#endif // DFRKEYPAD
+//   Serial.print("*  key: ");
+//   Serial.print(analogRead(A8));
+//   Serial.print(" ");
+//   Serial.println(buffer);
+   int keypress = getButtonPress();
+
+   if (keypress == BACK) {
+      Serial.println("detected something from back button");
+         selected = menu[selected].back;
+   }
+   if (keypress == UP) {
+      Serial.println("detected something from up button");
+         selected = menu[selected].up;
+   }
+   if (keypress == DOWN) {
+      Serial.println("detected something from down button");
+         selected = menu[selected].down;
+   }
+   if (keypress == ENTER) {
+      Serial.println("detected something from enter button");
+         if (menu[selected].fp != 0 ) {
+            menu[selected].fp(); // fp takes care of drawing menu
+         }  // may want to change this in the future
+         selected = menu[selected].enter;
+   }
+   if (keypress != -1) { 
+      showMenu();
+   }
 }
 

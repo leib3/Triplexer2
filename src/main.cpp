@@ -3,8 +3,8 @@
 #include "ADC.h"
 #include "IntervalTimer.h"
 #include "LiquidCrystal.h"
-#include "trip_osc.h"
-#include "trip_adc.h"
+//#include "trip_osc.h"
+//#include "trip_adc.h"
 
 
 
@@ -25,11 +25,16 @@ LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 
 
 
+
+
 void  init() {
    Serial.begin(9600);
    Serial.println("Hello from outside Arduino!");
-	pinMode(13, OUTPUT);
-   pinMode(0, INPUT);
+	pinMode(13, OUTPUT); // led
+   pinMode(ENTER, INPUT); // menu buttons
+   pinMode(UP, INPUT);
+   pinMode(DOWN, INPUT);
+   pinMode(BACK, INPUT);
    digitalWriteFast(13, HIGH);
    lcd.begin(16,2);
    //attachInterrupt(0, ISRtest, CHANGE);
@@ -39,25 +44,23 @@ void  init() {
    showMenu();
 }
 
-
-
-
 extern "C" int main() 
 {
    init();
-   adcinit();
-   oscinit();
-   timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
+   debounceInit();
+   //adcinit();
+   //oscinit();
+   //timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
    while (1) {
-      /*browseMenu();
-      if (usbMIDI.read() != 0) {
+      browseMenu();
+      /*if (usbMIDI.read() != 0) {
          Serial.print("Rcvd type ");
          Serial.println(usbMIDI.getType());
          Serial.print("MIDI channel ");
          Serial.println(usbMIDI.getChannel());
-      } */
-   delayMicroseconds(1000000);
-
+      } 
+      */
+   //delayMicroseconds(1000000);
    } 
 }
 

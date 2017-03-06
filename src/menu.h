@@ -9,6 +9,11 @@ typedef const struct MenuStruct
    void ( *fp ) ( void );
 } MenuEntry;
 
+#define ENTER 0 // digital pins
+#define UP 1
+#define DOWN 6
+#define BACK 3
+
 // Create global struct or pointer to global struct 
 // containing current MIDI channel #s and CC #s for each 
 // control parameter, plus other relevant status info for
@@ -45,3 +50,5 @@ static settingsStruct tpxSettings = {
 void browseMenu();
 
 void showMenu();
+
+void debounceInit();
