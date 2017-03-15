@@ -12,7 +12,7 @@ const int readPinLR = A3; // uses ADC1
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
-static int w_ul, w_ur, w_ll, w_lr; //store corner weights based on max values in calibration
+static int w_t; // max total weight
 volatile int adc0_state, adc1_state;   //state used in adc isr's
 
 ADC myAdc;
@@ -105,7 +105,7 @@ void calibrateZero(void){
 
 //called by adcCalibrate
 void calibrateMax(void){
-    int m_ul, m_ur, m_ll, m_lr;
+    int m_ul, m_ur, m_ll, m_lr, w_ul, w_ur, w_ll, w_lr;
     m_ul = m_ur = m_ll = m_lr = 0;
     for(int i = 0; i<256; i++){
        m_ul += myAdc.analogRead(A0);
@@ -116,14 +116,15 @@ void calibrateMax(void){
     }
 //now we have an average of sorts for each corner. Use these to set max total weight, 
 //and individual weights for weighted avgs of corners
-    w_ul = (1<<15) / ((m_ul>>8) - z_ul); 
-    w_ul = w_ul < 1 ? 1 : w_ul;
-    w_ur = (1<<15) / ((m_ur>>8) - z_ur);
-    w_ur = w_ur < 1 ? 1 : w_ur;
-    w_ll = (1<<15) / ((m_ll>>8) - z_ll);
-    w_ll = w_ll < 1 ? 1 : w_ll;
-    w_lr = (1<<15) / ((m_lr>>8) - z_lr);
-    w_lr = w_lr < 1 ? 1 : w_lr;
+    m_ul = (1<<15) / ((m_ul>>8) - z_ul); 
+    m_ul = w_ul < 1 ? 1 : w_ul;
+    m_ur = (1<<15) / ((m_ur>>8) - z_ur);
+    m_ur = w_ur < 1 ? 1 : w_ur;
+    m_ll = (1<<15) / ((m_ll>>8) - z_ll);
+    m_ll = w_ll < 1 ? 1 : w_ll;
+    m_lr = (1<<15) / ((m_lr>>8) - z_lr);
+    m_lr = w_lr < 1 ? 1 : w_lr;
+    w_t = w_ul+w_ur_w_ll+w_lr;
 }
 
 
