@@ -30,6 +30,10 @@ typedef const struct MenuStruct
 // be in use at the same time. 
 // how does the user change the mode assigned to each parameter, and at what
 // time is this checked for validity?
+//
+// TODO: how to disable a parameter?
+// TODO: parameter status menu screen OR persistent symbol in corner of LCD
+// referring to which modes are active
 class ControlModeAndSettings {
    public:
       uint8_t mode;
@@ -103,17 +107,17 @@ struct settingsStruct
 
 // initialize settingsStruct with default MIDI settings
 // declared static to avoid multiple definition linker error
-static settingsStruct tpxSettings = {
-        .xCCNum = 1, 
-        .xChannelNum = 1, 
-        .yCCNum = 1, 
-        .yChannelNum = 1,
-        .totCCNum = 1, 
-        .totChannelNum = 1,
-        .xInv = false, 
-        .yInv = false,
-        .totInv = false
-   };
+//static settingsStruct tpxSettings = {
+//        .xCCNum = 1, 
+//        .xChannelNum = 1, 
+//        .yCCNum = 1, 
+//        .yChannelNum = 1,
+//        .totCCNum = 1, 
+//        .totChannelNum = 1,
+//        .xInv = false, 
+//        .yInv = false,
+//        .totInv = false
+//   };
 
 void browseMenu();
 
