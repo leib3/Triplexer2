@@ -2,10 +2,14 @@
 #include "LiquidCrystal.h"
 #include "DFRkeypad.h"
 #include "Bounce2.h"
-
-
+/* TODO: Symbol or character to represent currently active mode FOR EACH PARAMETER 
+ * in corner of screen.
+ * ADDITIONALLY: ability to DISABLE any control parameters
+ * FINALLY: perhaps if we can't fit a symbol or character in the menu, a STATUS
+ * menu that shows all currently active parameters and the modes assigned to them
+ */
+extern LiquidCrystal lcd; // lcd object is declared and initialized in main.cpp
 unsigned char selected = 1;
-extern LiquidCrystal lcd; // lcd object is declared in main.cpp
 
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
@@ -31,24 +35,24 @@ const char menu_221[] = "MIDI channel";       // 16
 const char menu_222[] = "MIDI CC #";          // 17
 const char menu_223[] = "INV TOT";            // 18
 
-const char menu_300[] = "[X MIDI CHNL #]";    // 19
-const char menu_301[] = "[X CC #]";           // 20
+//const char menu_300[] = "[X MIDI CHNL #]";    // 19
+//const char menu_301[] = "[X CC #]";           // 20
 
 // These functions will be used to configure the MIDI channel and CC #s.
 // I really want to separate what the user sees (view) from what's
 // going on under the hood (MIDI CC stuff) but I'm not sure how 
 // to do this. 
-//
+
 // When we get the load cells working their input will be the 
 // MIDI CC value output from the weight processing module (to be written)
 // we can infer which parameter is being configured based on 
 // the value of 'selected'. 
 //const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
 //
-   Bounce back = Bounce();
-   Bounce up = Bounce();
-   Bounce down = Bounce();
-   Bounce enter = Bounce();
+static Bounce back = Bounce();
+static Bounce up = Bounce();
+static Bounce down = Bounce();
+static Bounce enter = Bounce();
 
 void debounceInit() {
 
@@ -61,7 +65,8 @@ void debounceInit() {
    down.attach(DOWN);
    down.interval(20);
    enter.attach(ENTER);
-   enter.interval(20); return;
+   enter.interval(20); 
+   return;
 }
 
 int getButtonPress() {

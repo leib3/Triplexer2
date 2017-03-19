@@ -3,17 +3,17 @@
 #include "ADC.h"
 #include "IntervalTimer.h"
 #include "LiquidCrystal.h"
+
 //#include "trip_osc.h"
 //#include "trip_adc.h"
 
 
 
-// RS, E, D4, D5, D6, D7
-//LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 //static int * raw;
 const int channel = 1;
 
 //display macros
+               // RS, E, D4, D5, D6, D7
 LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 
 #define btnRIGHT  0

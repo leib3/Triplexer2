@@ -9,10 +9,14 @@ typedef const struct MenuStruct
    void ( *fp ) ( void );
 } MenuEntry;
 
-#define ENTER 0 // digital pins
+#define ENTER 0 // digital pins for menu
 #define UP 1
 #define DOWN 6
 #define BACK 3
+// modes defines for ControlModeAndSettings class member mode
+#define MIDIUSB 0
+#define MIDIUART 1
+#define OSC 2
 
 // Create global struct or pointer to global struct 
 // containing current MIDI channel #s and CC #s for each 
@@ -20,6 +24,70 @@ typedef const struct MenuStruct
 // debugging purposes. There will be a single instance of this
 // struct that is shared by both the menu and the load cell
 // input processing module (TODO)
+
+// each parameter (MIDI/USB, MIDI/UART, TOT) should be able to be assigned
+// to MIDI/USB, MIDI/UART, or OSC. For now, OSC and MIDI/USB should not
+// be in use at the same time. 
+// how does the user change the mode assigned to each parameter, and at what
+// time is this checked for validity?
+class ControlModeAndSettings {
+   public:
+      uint8_t mode;
+      void update(uint8_t option, uint8_t value)
+      {
+         settings[option] = value; // menu.cpp already takes care of ensuring all MIDI settings
+         // fall in valid range
+      }
+      uint8_t read(uint8_t option) // read current menu option value
+      {
+         return settings[option];
+      }
+   private:
+      std::map<uint8_t, uint8_t> settings; // maybe rename
+};
+
+class param { // making this barebones class allows us to refer to each parameter directly by name
+   ControlModeAndSettings active;
+};
+class tpxSettings {
+   public:
+      param X,Y,TOT;
+
+      bool isValid(uint8_t XMode, uint8_t YMode, uint8_t TOTMode) // check if valid combination of modes is assigned
+      // to parameters (X, Y, TOT)
+      // most likely done after user hits enter on mode selection screen
+      {
+
+      }
+      // splitting mode setting into three separate, nearly identical functions is not elegant,
+      // but it will work for now. What prevents us from using a single function to do this 
+      // is the lack of a clear way to refer to the parameter whose mode we want to set, as an
+      // argument to this function. 
+      void setXMode(uint8_t modeToSet)
+      {
+         // test for valid combination of modes with prospective mode change
+         if (isValid(modeToSet, Y.active.mode, TOT.active.mode)) {
+            X.active.mode = modeToSet;
+         }
+         // rely on isValid() to print problem to Serial. Eventually, lcd prints problem
+         return;
+      }
+      void setYMode(uint8_t modeToSet)
+      {
+         if (isValid(X.active.mode, modeToSet, TOT.active.mode)) {
+            Y.active.mode = modeToSet;
+         }
+         return;
+      }
+      void setTOTMode(uint8_t modeToSet) 
+      {
+         if (isValid(X.active.mode, Y.active.mode, modeToSet)) {
+            TOT.active.mode = modeToSet;
+         }
+         return;
+      }
+};
+
 struct settingsStruct
 {
    uint8_t xCCNum;
