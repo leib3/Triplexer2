@@ -61,7 +61,8 @@ class ControlModeAndSettings {
 };
 
 class param { // making this barebones class allows us to refer to each parameter directly by name
-   ControlModeAndSettings active;
+   public:
+      ControlModeAndSettings active;
 };
 class tpxSettings {
    public:
@@ -96,8 +97,7 @@ class tpxSettings {
             return 1;
          }
          else {
-            Serial.println("invalid mode combination. Only one protocol that uses USB can be
-                  active at a time");
+            Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
             return -1;
          }
          // rely on isValid() to print problem to Serial. Eventually, lcd prints problem
@@ -109,8 +109,7 @@ class tpxSettings {
             return 1;
          }
          else {
-            Serial.println("invalid mode combination. Only one protocol that uses USB can be
-                  active at a time");
+            Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
             return -1;
          }
       }
@@ -121,8 +120,7 @@ class tpxSettings {
             return 1;
          }
          else {
-            Serial.println("invalid mode combination. Only one protocol that uses USB can be
-                  active at a time");
+            Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
            return -1;
          }
       }

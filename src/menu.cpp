@@ -5,35 +5,55 @@
 /* TODO: Symbol or character to represent currently active mode FOR EACH PARAMETER 
  * in corner of screen.
  * ADDITIONALLY: ability to DISABLE any control parameters
- * FINALLY: perhaps if we can't fit a symbol or character in the menu, a STATUS
- * menu that shows all currently active parameters and the modes assigned to them
+ * FINALLY: perhaps if we can't fit a symbol or character in the corner of the menu,
+ * a STATUS menu that shows all currently active parameters and the modes assigned to them
  */
 extern LiquidCrystal lcd; // lcd object is declared and initialized in main.cpp
 unsigned char selected = 1;
+unsigned char xCfg = 9; // menu initially thinks all parameters are in MIDI mode. May want to change later
+unsigned char yCfg = 16; // these are just initializations
+unsigned char totCfg = 23;
+tpxSettings Settings = new tpxSettings; 
 
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
 const char menu_002[] = "Calibration";        // 2
+const char menu_003[] = "Status";             // 3
 
-const char menu_100[] = "[Config parameter]"; // 3
-const char menu_101[] = "X";                  // 4
-const char menu_102[] = "Y";                  // 5                       
-const char menu_103[] = "TOT";                // 6
+const char menu_100[] = "[Config parameter]"; // 4
+const char menu_101[] = "X";                  // 5
+const char menu_102[] = "Y";                  // 6                       
+const char menu_103[] = "TOT";                // 7
 
-const char menu_200[] = "[Config X]";         // 7
-const char menu_201[] = "MIDI channel";       // 8
-const char menu_202[] = "MIDI CC #";          // 9 
-const char menu_203[] = "INV X";              // 10
+const char menu_200[] = "[Config X]";         // 8
+const char menu_201[] = "MIDI channel";       // 9
+const char menu_202[] = "MIDI CC #";          // 10
+const char menu_203[] = "INV X";              // 11
+const char menu_204[] = "MODE";               // 12
 
-const char menu_210[] = "[Config Y]";         // 11
-const char menu_211[] = "MIDI channel";       // 12
-const char menu_212[] = "MIDI CC #";          // 13
-const char menu_213[] = "INV Y";              // 14
+const char menu_205[] = "[Config X OSC]";     // 13
+const char menu_206[] = "OPTION #1";          // 14
+const char menu_207[] = "OPTION #2";          // 15
 
-const char menu_220[] = "[Config TOT]";       // 15
-const char menu_221[] = "MIDI channel";       // 16
-const char menu_222[] = "MIDI CC #";          // 17
-const char menu_223[] = "INV TOT";            // 18
+const char menu_210[] = "[Config Y]";         // 16
+const char menu_211[] = "MIDI channel";       // 17
+const char menu_212[] = "MIDI CC #";          // 18
+const char menu_213[] = "INV Y";              // 19
+const char menu_214[] = "MODE";               // 20
+
+const char menu_215[] = "[Config Y OSC]";     // 21
+const char menu_216[] = "OSC OPTION #1";      // 22
+const char menu_217[] = "OSC OPTION #2";      // 23
+
+const char menu_220[] = "[Config TOT]";       // 24
+const char menu_221[] = "MIDI channel";       // 25
+const char menu_222[] = "MIDI CC #";          // 26
+const char menu_223[] = "INV TOT";            // 27
+const char menu_224[] = "MODE";               // 28
+
+const char menu_225[] = "[Config TOT OSC]";   // 29
+const char menu_226[] = "OSC OPTION #1";      // 30
+const char menu_227[] = "OSC OPTION #2";      // 31
 
 //const char menu_300[] = "[X MIDI CHNL #]";    // 19
 //const char menu_301[] = "[X CC #]";           // 20
@@ -290,29 +310,45 @@ void configINV()
 
 MenuEntry menu[] =
 {
-   {menu_000, 3, 0, 0, 0, 0, 0}, // [Main Menu]   0
-   {menu_001, 3, 1, 2, 4, 1, 0},                // 1
-   {menu_002, 3, 1, 2, 2, 1, 0},                // 2
+   {menu_000, 4, 0, 0, 0, 0, 0}, // [Main Menu]   0
+   {menu_001, 4, 1, 2, 4, 1, 0},                // 1
+   {menu_002, 4, 1, 2, 2, 1, 0},                // 2
+   {menu_003, 4, 2, 3, 3, 1, 0}, // status      // 3
                                                   
-   {menu_100, 4, 0, 0, 0, 0, 0}, // [Config param] 3
-   {menu_101, 4, 4, 5, 8, 1, 0},                // 4
-   {menu_102, 4, 4, 6, 12, 1, 0},               // 5 
-   {menu_103, 4, 5, 6, 16, 1, 0},               // 6
+   {menu_100, 4, 0, 0, 0, 0, 0}, // [Config param] // 4
+   {menu_101, 4, 5, 6, xCfg, 1, 0},                // 5
+   {menu_102, 4, 5, 6, yCfg, 1, 0},                // 6 
+   {menu_103, 4, 5, 6, totCfg, 1, 0},              // 7
                                                   
-   {menu_200, 4, 0, 0, 0, 0, 0}, // [Config X]     7
-   {menu_201, 4, 8, 9, 8, 4, configMIDIChannel},// 8         
-   {menu_202, 4, 8, 10, 9, 4, configMIDICC},    // 9
-   {menu_203, 4, 9, 10, 10, 4, configINV},     // 10
+   {menu_200, 5, 0, 0, 0, 0, 0}, // [Config X]     // 8
+   {menu_201, 5, 9, 9,  8,  5, configMIDIChannel}, // 9           
+   {menu_202, 5, 9, 10, 9,  5, configMIDICC},      // 10
+   {menu_203, 5, 10, 11, 10, 5, configINV},         // 11
+   {menu_204, 5, 11, 12, 12, 5 configMODE},        // 12
+
+   {menu_205, 3, 0, 0, 0, 0, 0}, // [Config X OSC]    // 13
+   {menu_206, 3, 14, 15, 14, 0},                      // 14
+   {menu_207, 3, 14, 15, 15, 0},                      // 15
                                                  
-   {menu_210, 4, 0, 0, 0, 0, 0}, // [Config Y]  // 11
-   {menu_211, 4, 12, 13, 12, 5, configMIDIChannel},   // 12
-   {menu_212, 4, 12, 14, 13, 5, configMIDICC},        // 13
-   {menu_213, 4, 13, 14, 14, 5, configINV},           // 14
-                                                 
-   {menu_220, 4, 0, 0, 0, 0, 0},  // [Config TOT// 15
-   {menu_221, 4, 16, 17, 16, 6, configMIDIChannel},   // 16
-   {menu_222, 4, 16, 18, 17, 6, configMIDICC},        // 17
-   {menu_223, 4, 17, 18, 18, 6, configINV}            // 18
+   {menu_210, 5, 0, 0, 0, 0, 0}, // [Config Y]        // 16
+   {menu_211, 5, 17, 18, 17, 5, configMIDIChannel},   // 17
+   {menu_212, 5, 17, 19, 18, 5, configMIDICC},        // 18
+   {menu_213, 5, 18, 20, 19, 5, configINV},           // 19
+   {menu_214, 5, 19, 20, 20, 5, configMODE},          // 20
+
+   {menu_215, 3, 0, 0, 0, 0, 0}, // [Config Y OSC]    // 21
+   {menu_216, 3, 22, 23, 22, 5, 0},                   // 22
+   {menu_217, 3, 22, 23, 23, 5, 0},                   // 23
+                                                
+   {menu_220, 5, 0, 0, 0, 0, 0},  // [Config TOT]     // 24
+   {menu_221, 5, 25, 26, 25, 5, configMIDIChannel},   // 25
+   {menu_222, 5, 25, 27, 26, 5, configMIDICC},        // 26
+   {menu_223, 5, 26, 28, 27, 5, configINV},           // 27
+   {menu_224, 5, 27, 28, 28, 5, 0},                   // 28
+
+   {menu_225, 3, 0, 0, 0, 0, 0}, // [Config TOT OSC]  // 29
+   {menu_226, 3, 30, 31, 30, 5, 0},                   // 30
+   {menu_227, 3, 30, 31, 31, 5, 0}                    // 31
 };
 
 void showMenu() {
@@ -363,6 +399,7 @@ void showMenu() {
 }
 
 void browseMenu() {
+   
 
 #ifdef DFRKEYPAD
    static char buffer[15];
@@ -416,7 +453,7 @@ void browseMenu() {
          }  // may want to change this in the future
          selected = menu[selected].enter;
    }
-   if (keypress != -1) { 
+   if (keypress != -1) { // only redraw menu if keypress is detected
       showMenu();
    }
 }
