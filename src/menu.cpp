@@ -11,9 +11,9 @@
 extern LiquidCrystal lcd; // lcd object is declared and initialized in main.cpp
 unsigned char selected = 1;
 unsigned char xCfg = 9; // menu initially thinks all parameters are in MIDI mode. May want to change later
-unsigned char yCfg = 16; // these are just initializations
-unsigned char totCfg = 23;
-tpxSettings Settings = new tpxSettings; 
+unsigned char yCfg = 17; // these are just initializations
+unsigned char totCfg = 25;
+tpxSettings Settings = new tpxSettings; // how do I share this instance with the future web front-end?
 
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
@@ -111,22 +111,22 @@ int getButtonPress() {
    else return -1; // no button press detected
 }
 void configMIDICC() {
-   static char param;
-   uint8_t * midiCCPtr;
+   char param;
+   uint8_t CCnum;
    int keypress;
    switch (selected) {
         case 9:
-                param = 'X';
-                midiCCPtr = &tpxSettings.xCCNum;
-                break;
+           param = 'X';
+           CCnum = Settings->getParamSetting('X', 1);
+           break;
         case 13:
-                param = 'Y';
-                midiCCPtr = &tpxSettings.yCCNum;
-                break;
+           param = 'Y';
+           CCnum = Settings->getParamSetting('Y', 1);
+           break;
         case 17:
-                param = 'T';
-                midiCCPtr = &tpxSettings.totCCNum;
-                break;
+           param = 'T';
+           CCnum = Settings->getParamSetting('T', 1);
+           break;
    }
    lcd.clear();
    lcd.setCursor(0,0);
@@ -136,10 +136,10 @@ void configMIDICC() {
    do {
       keypress = getButtonPress();
       lcd.setCursor(1,1);
-      lcd.print(*midiCCPtr);
+      lcd.print(CCnum);
       if (keypress == UP) {
-         if (*midiCCPtr == 127) { 
-            *midiCCPtr = 1;
+         if (CCnum == 127) { 
+            CCnum = 1;
             lcd.clear();
             lcd.setCursor(0,0);
             lcd.print("[MIDI CC #]");
@@ -147,31 +147,47 @@ void configMIDICC() {
             lcd.print(param);
          }
          else {
-            ++(*midiCCPtr);
+            ++CCnum;
          }
       }
       else if (keypress == DOWN) { 
-         if (*midiCCPtr == 1) {
-            *midiCCPtr = 127;
+         if (CCnum == 1) {
+            CCnum = 127;
          }
-         else if (*midiCCPtr == 100 || *midiCCPtr == 10) {
+         else if (CCnum == 100 || CCnum == 10) {
             lcd.clear();
             lcd.setCursor(0,0);
             lcd.print("[MIDI CC #]");
             lcd.setCursor(14, 0);
             lcd.print(param);
-            --(*midiCCPtr);
+            --CCnum;
          }
          else {
-            --(*midiCCPtr);
+            --CCnum;
          }
       }
    }
    while(keypress != ENTER); // loop until user hits enter
-
+   switch (param) {
+      case 'X':
+         if (Settings->setXOption(1, CCnum) != 1) {
+            Serial.println("Error setting X CC num");
+         }
+         break;
+      case 'Y':
+         if (Settings->setYoption(1, CCnum) != 1) {
+            Serial.println("Error setting Y CC num");
+         }
+         break;
+      case 'T':
+         if (Settings->SetTOTOption(1, CCnum) != 1) {
+            Serial.println("Error setting TOT CC num");
+         }
+         break;
+   }
    lcd.setCursor(1,1);
    lcd.print("CC # ");
-   lcd.print(*midiCCPtr);
+   lcd.print(CCnum);
    lcd.print(" OK");
    delay(1000); // allow user time to see confirmation 
    // of midi CC number
@@ -179,22 +195,22 @@ void configMIDICC() {
 }
 
 void configMIDIChannel() {
-  static char param;
-  uint8_t * midiChPtr;
+  char param;
+  uint8_t CHnum;
   int keypress;
   switch (selected) {
      case 8:
-             param = 'X';
-             midiChPtr = &tpxSettings.xChannelNum;
-             break;
+       param = 'X';
+       CHnum = getParamSetting('X', 0);
+       break;
      case 12:
-             param = 'Y';
-             midiChPtr = &tpxSettings.yChannelNum;
-             break;
+       param = 'Y';
+       CHnum = getParamSetting('Y', 0);
+       break;
      case 16:
-             param = 'T';
-             midiChPtr = &tpxSettings.totChannelNum;
-             break;
+       param = 'T';
+       CHnum = getParamSetting('T', 0);
+       break;
   }
 
   lcd.clear();
@@ -205,15 +221,15 @@ void configMIDIChannel() {
   do {
      keypress = getButtonPress();
      lcd.setCursor(1,1);
-     lcd.print(*midiChPtr);
+     lcd.print(CHnum);
      if (keypress == UP) { // up
-   // accounting for when *midiChPtr goes from
+   // accounting for when *CHnum goes from
    // two digits to one digit in length -- second
    // digit persists on LCD unless we redraw the
    // screen entirely. Not elegant, but works for 
    // now
-        if (*midiChPtr == 16) {
-           *midiChPtr = 1;
+        if (CHnum == 16) {
+           CHnum = 1;
            lcd.clear();
            lcd.setCursor(0,0);
            lcd.print("[MIDI CHNL #]");
@@ -221,31 +237,48 @@ void configMIDIChannel() {
            lcd.print(param);
         } 
         else {
-          ++(*midiChPtr);
+          ++CHnum;
         }
      }
      else if (keypress == DOWN) { // down
-       if (*midiChPtr == 1) {
-         *midiChPtr = 16;
+       if (CHnum == 1) {
+         CHnum = 16;
        }
-       else if (*midiChPtr == 10) {
+       else if (*CHnum == 10) {
            lcd.clear();
            lcd.setCursor(0,0);
            lcd.print("[MIDI CHNL #]");
            lcd.setCursor(14,0);
            lcd.print(param);
-           --(*midiChPtr);
+           --CHnum;
        }
        else {
-         --(*midiChPtr);
+         --CHnum;
        }
      }
   }
   while(keypress != ENTER); // loop until user hits enter
 
+   switch (param) {
+      case 'X':
+         if (Settings->Settings->setXOption(0, CCnum) != 1) {
+            Serial.println("Error setting X channel num");
+         }
+         break;
+      case 'Y':
+         if (Settings->setYoption(0, CCnum) != 1) {
+            Serial.println("Error setting Y channel num");
+         }
+         break;
+      case 'T':
+         if (Settings->SetTOTOption(0, CCnum) != 1) {
+            Serial.println("Error setting TOT channel num");
+         }
+         break;
+   }
   lcd.setCursor(1,1);
   lcd.print("Channel ");
-  lcd.print(*midiChPtr);
+  lcd.print(CHnum);
   lcd.print(" OK");
   delay(1000); // allow user time to see confirmation
  // of MIDI channel 
@@ -254,21 +287,21 @@ void configMIDIChannel() {
 
 void configINV()
 {
-  bool * invPtr;
-  static char param;
+  uint8_t inv;
+  char param;
   int keypress;
   switch (selected) {
      case 10:
           param = 'X';
-          invPtr = &tpxSettings.xInv;
+          inv = getParamSetting('X', 2);
           break;
      case 14:
           param = 'Y';
-          invPtr = &tpxSettings.yInv;
-             break;
+          inv = getParamSetting('Y', 2);
+          break;
      case 18:
           param = 'T';
-          invPtr = &tpxSettings.totInv;
+          inv = getParamSetting('T', 2);
           break;
   }
   lcd.clear();
@@ -279,24 +312,42 @@ void configINV()
   do {
     keypress = getButtonPress();
     lcd.setCursor(1,1);
-    if (!*invPtr) {
+    if (inv == 0) {
        lcd.print("NORMAL");
     }
     else {
       lcd.print("INVERT");
     }
-    if ((keypress == UP /*up*/ || keypress == DOWN) && (!*invPtr)) {
-      *invPtr = true;  
+    if ((keypress == UP || keypress == DOWN) && (inv == 0)) {
+      inv = 1;
     }
-    else if ((keypress == UP /*down*/ || keypress == DOWN) && (*invPtr)) {
-      *invPtr = false;
+    else if ((keypress == UP || keypress == DOWN) && (inv == 1)) {
+      inv = 0;
     }
   }
   while (keypress != 1); // loop till user hits enter
+   
+   switch (param) {
+      case 'X':
+         if (Settings->setXOption(2, CCnum) != 1) {
+            Serial.println("Error setting X channel num");
+         }
+         break;
+      case 'Y':
+         if (Settings->setYoption(2, CCnum) != 1) {
+            Serial.println("Error setting Y channel num");
+         }
+         break;
+      case 'T':
+         if (Settings->SetTOTOption(2, CCnum) != 1) {
+            Serial.println("Error setting TOT channel num");
+         }
+         break;
+   }
   lcd.setCursor(1,1);
   lcd.print(param);
   lcd.print(" ");
-  if (!*invPtr) {
+  if (inv == 0) {
     lcd.print("NORMAL");
   }
   else {
@@ -398,8 +449,29 @@ void showMenu() {
    delay(20);
 }
 
+void menuCfg() {
+   if (Settings->getParamMode('X')) {
+      xCfg = 14;
+   }
+   else {
+      xCfg = 9;
+   }
+   if (Settings->getParamMode('Y')) {
+      yCfg = 22;
+   }
+   else {
+      yCfg = 17;
+   }
+   if (Settings->getParamMode('T')) {
+      totCfg = 30;
+   }
+   else {
+      totCfg = 25;
+   }
+}
+
 void browseMenu() {
-   
+   menuCfg();
 
 #ifdef DFRKEYPAD
    static char buffer[15];

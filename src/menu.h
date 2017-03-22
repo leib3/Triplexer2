@@ -100,7 +100,6 @@ class tpxSettings {
             Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
             return -1;
          }
-         // rely on isValid() to print problem to Serial. Eventually, lcd prints problem
       }
       uint8_t setYMode(uint8_t modeToSet)
       {
@@ -124,6 +123,42 @@ class tpxSettings {
            return -1;
          }
       }
+      uint8_t getParamMode(char param)
+      {
+         switch (param)
+            case 'X':
+               if (X.active.mode == MIDIUSB || X.active.mode == MIDIUART) {
+                  return 0;
+               }
+               else return 1; // OSC
+            case 'Y':
+               if (Y.active.mode == MIDIUSB || X.active.mode == MIDIUART) {
+                  return 0;
+               }
+               else return 1; // OSC
+            case 'T':
+               if (TOT.active.mode == MIDIUSB || TOT.active.mode == MIDIUART) {
+                  return 0;
+               }
+               else return 1; // OSC
+            case default:
+               return -1; // invalid parameter passed to function
+      }
+      uint8_t getParamSetting(char param, uint8_t key)
+      {
+         switch (param)
+            case 'X':
+               return X.active.read(key);
+
+            case 'Y':
+               return Y.active.read(key);
+
+            case 'T':
+               return TOT.active.read(key);
+
+            case default:
+               return -1; // invalid parameter passed to function
+      }
       // unfortunately if we want to make a generic interface that
       // the web front-end can work with, we cannot use "selected" from
       // the menu logic to infer which parameter we are configuring.
@@ -133,19 +168,19 @@ class tpxSettings {
       // doesn't allow the user to input invalid values for ex: a CC number.
       // Problem is the web front-end will. LUCKILY, IF WE'RE GOING TO DO IT RIGHT,
       // error checking can happen on the front-end itself!! Not in our program here!
-      uint8_t updateXOptions(uint8_t option, uint8_t value) 
+      uint8_t setXOption(uint8_t option, uint8_t value) 
       {
         X.active.update(option, value);
 
         return 1; // need to add error handling
       }
-      uint8_t updateYOptions(uint8_t option, uint8_t value) 
+      uint8_t setYOption(uint8_t option, uint8_t value) 
       {
         Y.active.update(option, value);
 
         return 1; // need to add error handling
       }
-      uint8_t updateTOTOptions(uint8_t option, uint8_t value)
+      uint8_t SetTOTOption(uint8_t option, uint8_t value)
       {
         TOT.active.update(option, value);
 
