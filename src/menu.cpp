@@ -1,4 +1,5 @@
 #include "menu.h"
+#include "settings.h"
 #include "LiquidCrystal.h"
 #include "DFRkeypad.h"
 #include "Bounce2.h"
@@ -13,7 +14,8 @@ unsigned char selected = 1;
 unsigned char xCfg = 9; // menu initially thinks all parameters are in MIDI mode. May want to change later
 unsigned char yCfg = 17; // these are just initializations
 unsigned char totCfg = 25;
-tpxSettings Settings = new tpxSettings; // how do I share this instance with the future web front-end?
+tpxSettings * Settings = new tpxSettings; // how do I share this instance with the future web front-end?
+// so far I'm relying on the compiler to generate constructors for all classes in settings.h. This may need to change.
 
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
@@ -58,13 +60,6 @@ const char menu_227[] = "OSC OPTION #2";      // 31
 //const char menu_300[] = "[X MIDI CHNL #]";    // 19
 //const char menu_301[] = "[X CC #]";           // 20
 
-// These functions will be used to configure the MIDI channel and CC #s.
-// I really want to separate what the user sees (view) from what's
-// going on under the hood (MIDI CC stuff) but I'm not sure how 
-// to do this. 
-
-// When we get the load cells working their input will be the 
-// MIDI CC value output from the weight processing module (to be written)
 // we can infer which parameter is being configured based on 
 // the value of 'selected'. 
 //const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
@@ -175,12 +170,12 @@ void configMIDICC() {
          }
          break;
       case 'Y':
-         if (Settings->setYoption(1, CCnum) != 1) {
+         if (Settings->setYOption(1, CCnum) != 1) {
             Serial.println("Error setting Y CC num");
          }
          break;
       case 'T':
-         if (Settings->SetTOTOption(1, CCnum) != 1) {
+         if (Settings->setTOTOption(1, CCnum) != 1) {
             Serial.println("Error setting TOT CC num");
          }
          break;
@@ -201,15 +196,15 @@ void configMIDIChannel() {
   switch (selected) {
      case 8:
        param = 'X';
-       CHnum = getParamSetting('X', 0);
+       CHnum = Settings->getParamSetting('X', 0);
        break;
      case 12:
        param = 'Y';
-       CHnum = getParamSetting('Y', 0);
+       CHnum = Settings->getParamSetting('Y', 0);
        break;
      case 16:
        param = 'T';
-       CHnum = getParamSetting('T', 0);
+       CHnum = Settings->getParamSetting('T', 0);
        break;
   }
 
@@ -244,7 +239,7 @@ void configMIDIChannel() {
        if (CHnum == 1) {
          CHnum = 16;
        }
-       else if (*CHnum == 10) {
+       else if (CHnum == 10) {
            lcd.clear();
            lcd.setCursor(0,0);
            lcd.print("[MIDI CHNL #]");
@@ -261,17 +256,17 @@ void configMIDIChannel() {
 
    switch (param) {
       case 'X':
-         if (Settings->Settings->setXOption(0, CCnum) != 1) {
+         if (Settings->setXOption(0, CHnum) != 1) {
             Serial.println("Error setting X channel num");
          }
          break;
       case 'Y':
-         if (Settings->setYoption(0, CCnum) != 1) {
+         if (Settings->setYOption(0, CHnum) != 1) {
             Serial.println("Error setting Y channel num");
          }
          break;
       case 'T':
-         if (Settings->SetTOTOption(0, CCnum) != 1) {
+         if (Settings->setTOTOption(0, CHnum) != 1) {
             Serial.println("Error setting TOT channel num");
          }
          break;
@@ -293,15 +288,15 @@ void configINV()
   switch (selected) {
      case 10:
           param = 'X';
-          inv = getParamSetting('X', 2);
+          inv = Settings->getParamSetting('X', 2);
           break;
      case 14:
           param = 'Y';
-          inv = getParamSetting('Y', 2);
+          inv = Settings->getParamSetting('Y', 2);
           break;
      case 18:
           param = 'T';
-          inv = getParamSetting('T', 2);
+          inv = Settings->getParamSetting('T', 2);
           break;
   }
   lcd.clear();
@@ -329,17 +324,17 @@ void configINV()
    
    switch (param) {
       case 'X':
-         if (Settings->setXOption(2, CCnum) != 1) {
+         if (Settings->setXOption(2, inv) != 1) {
             Serial.println("Error setting X channel num");
          }
          break;
       case 'Y':
-         if (Settings->setYoption(2, CCnum) != 1) {
+         if (Settings->setYOption(2, inv) != 1) {
             Serial.println("Error setting Y channel num");
          }
          break;
       case 'T':
-         if (Settings->SetTOTOption(2, CCnum) != 1) {
+         if (Settings->setTOTOption(2, inv) != 1) {
             Serial.println("Error setting TOT channel num");
          }
          break;
@@ -354,9 +349,14 @@ void configINV()
     lcd.print("INVERT");
   }
   lcd.print(" OK");
-  delay(1000); // allow user to see confirmation of parameter invert setting
+  delay(1000); // give user time to see confirmation of invert parameter setting
 
   return;
+}
+
+void configMODE()
+{
+
 }
 
 MenuEntry menu[] =
@@ -375,7 +375,7 @@ MenuEntry menu[] =
    {menu_201, 5, 9, 9,  8,  5, configMIDIChannel}, // 9           
    {menu_202, 5, 9, 10, 9,  5, configMIDICC},      // 10
    {menu_203, 5, 10, 11, 10, 5, configINV},         // 11
-   {menu_204, 5, 11, 12, 12, 5 configMODE},        // 12
+   {menu_204, 5, 11, 12, 12, 5, configMODE},        // 12
 
    {menu_205, 3, 0, 0, 0, 0, 0}, // [Config X OSC]    // 13
    {menu_206, 3, 14, 15, 14, 0},                      // 14
