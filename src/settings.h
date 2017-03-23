@@ -5,8 +5,12 @@ class param {
       std::map<uint8_t, uint8_t> settings;
    public:
       uint8_t mode;
-      void update(uint8_t option, uint8_t value);
+      param()  : mode(99) // default value
+      {
+       // initialize settings map! 
+      }
 
+      void update(uint8_t option, uint8_t value);
       uint8_t read(uint8_t option);
 };
 
