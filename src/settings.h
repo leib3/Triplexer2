@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <map>
-class ControlModeAndSettings{
+class param {
    private:
       std::map<uint8_t, uint8_t> settings;
    public:
@@ -8,11 +8,6 @@ class ControlModeAndSettings{
       void update(uint8_t option, uint8_t value);
 
       uint8_t read(uint8_t option);
-};
-
-class param {
-   public:
-      ControlModeAndSettings active;
 };
 
 class tpxSettings {
