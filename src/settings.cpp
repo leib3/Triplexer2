@@ -2,9 +2,6 @@
 #include "WProgram.h"
 
 // modes defines for param class member mode
-#define MIDIUSB 0
-#define MIDIUART 1
-#define OSC 2
 
 // Create global struct or pointer to global struct 
 // containing current MIDI channel #s and CC #s for each 
@@ -46,18 +43,14 @@
       // most likely done after user hits enter on mode selection screen
    {
       uint8_t temp[3] = {XMode, YMode, TOTMode};
-      uint8_t OSCflag = 0;
-      uint8_t MIDIUSBflag = 0;
+      uint8_t USBcount = 0;
       for (int i = 0; i < 3; ++i) {
-         if (temp[i] == MIDIUSB) {
-            MIDIUSBflag = 1;
-         }
-         else if (temp[i] == OSC) {
-            OSCflag = 1;
+         if (temp[i] == MIDIUSB || temp[i] == OSC) {
+            ++USBcount;
          }
          else continue;
       }
-      if (MIDIUSBflag && OSCflag) return false;
+      if (USBcount > 1) return false;
       else return true;
    }
 
@@ -101,24 +94,41 @@
    {
       switch (param) {
          case 'X':
-            if (X.mode == MIDIUSB || X.mode == MIDIUART) {
-               return 0;
+            if (X.mode == MIDIUSB) {
+               return MIDIUSB;
             }
-            else return 1; // OSC
+            else if (X.mode == MIDIUART) {
+               return MIDIUART;
+            }
+            else if (X.mode == OSC) {
+               return OSC;
+            }
+            else return -1; // error
          case 'Y':
-            if (Y.mode == MIDIUSB || X.mode == MIDIUART) {
-               return 0;
+            if (Y.mode == MIDIUSB) {
+               return MIDIUSB;
             }
-            else return 1; // OSC
+            else if (Y.mode == MIDIUART) {
+               return MIDIUART;
+            }
+            else if (Y.mode == OSC) {
+               return OSC;
+            }
+            else return -1; // error
          case 'T':
-            if (TOT.mode == MIDIUSB || TOT.mode == MIDIUART) {
-               return 0;
+            if (TOT.mode == MIDIUSB) {
+               return MIDIUSB;
             }
-            else return 1; // OSC
+            else if (TOT.mode == MIDIUART) {
+               return MIDIUART;
+            }
+            else if (TOT.mode == OSC) {
+               return OSC;
+            }
+            else return -1; // error
 
          default:
             return -1; // invalid parameter passed to function
-
       }
    }
    uint8_t tpxSettings::getParamSetting(char param, uint8_t key)

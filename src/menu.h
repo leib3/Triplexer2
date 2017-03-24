@@ -1,10 +1,15 @@
 #include "stdint.h"
 
-#define ENTER 0 // digital pins for menu
+#define PIN_ENTER 0 // digital pins for menu
+#define PIN_UP 6
+#define PIN_DOWN 1
+#define PIN_BACK 3
+
+#define ENTER 0
 #define UP 1
-#define DOWN 6
+#define DOWN 2
 #define BACK 3
-typedef const struct MenuStruct
+typedef struct MenuStruct
 {  const char * text;
    unsigned char num_menupoints;
    unsigned char up;
