@@ -6,20 +6,17 @@
 #include <map>
 
 //#include <string>
-/* TODO: Symbol or character to represent currently active mode FOR EACH PARAMETER 
- * in corner of screen.
- * ADDITIONALLY: ability to DISABLE any control parameters
- * FINALLY: perhaps if we can't fit a symbol or character in the corner of the menu,
- * a STATUS menu that shows all currently active parameters and the modes assigned to them
+/* TODO: 
+ * ability to DISABLE any control parameters
+ * a STATUS menu that lists mode, status (enabled/disabled), and settings for all three parameters
  */
 extern LiquidCrystal lcd; // lcd object is declared and initialized in main.cpp
 unsigned char selected = 1;
 unsigned char xCfg = 9; // menu initially thinks all parameters are in MIDI mode. May want to change later
-unsigned char yCfg = 17; // these are just initializations
-unsigned char totCfg = 25;
+unsigned char yCfg = 19; // these are just initializations
+unsigned char totCfg = 29;
 tpxSettings * Settings = new tpxSettings; // how do I share this instance with the future web front-end?
 const char * modemap[3] = {"MIDI/USB","MIDI/UART","OSC"};
-// so far I'm relying on the compiler to generate constructors for all classes in settings.h. This may need to change.
 
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
@@ -36,36 +33,45 @@ const char menu_201[] = "MIDI channel";       // 9
 const char menu_202[] = "MIDI CC #";          // 10
 const char menu_203[] = "INV X";              // 11
 const char menu_204[] = "MODE";               // 12
+const char menu_209[] = "EN/DISABLE X";       // 13
 
-const char menu_205[] = "[Config X OSC]";     // 13
-const char menu_206[] = "OPTION #1";          // 14
-const char menu_207[] = "MODE";               // 15
+const char menu_205[] = "[Config X OSC]";     // 14
+const char menu_206[] = "OPTION #1";          // 15
+const char menu_207[] = "MODE";               // 16
+//toggle                                              // 17
 
-const char menu_210[] = "[Config Y]";         // 16
-const char menu_211[] = "MIDI channel";       // 17
-const char menu_212[] = "MIDI CC #";          // 18
-const char menu_213[] = "INV Y";              // 19
-const char menu_214[] = "MODE";               // 20
+const char menu_210[] = "[Config Y]";         // 18
+const char menu_211[] = "MIDI channel";       // 19
+const char menu_212[] = "MIDI CC #";          // 20
+const char menu_213[] = "INV Y";              // 21
+const char menu_214[] = "MODE";               // 22
+const char menu_218[] = "EN/DISABLE Y";       // 23
 
-const char menu_215[] = "[Config Y OSC]";     // 21
-const char menu_216[] = "OSC OPTION #1";      // 22
-const char menu_217[] = "MODE";               // 23
+const char menu_215[] = "[Config Y OSC]";     // 24
+const char menu_216[] = "OSC OPTION #1";      // 25
+const char menu_217[] = "MODE";               // 26
+                                              // 27
 
-const char menu_220[] = "[Config TOT]";       // 24
-const char menu_221[] = "MIDI channel";       // 25
-const char menu_222[] = "MIDI CC #";          // 26
-const char menu_223[] = "INV TOT";            // 27
-const char menu_224[] = "MODE";               // 28
+const char menu_220[] = "[Config TOT]";       // 28
+const char menu_221[] = "MIDI channel";       // 29
+const char menu_222[] = "MIDI CC #";          // 30
+const char menu_223[] = "INV TOT";            // 31
+const char menu_224[] = "MODE";               // 32
+const char menu_228[] = "EN/DISABLE TOT";     // 33
 
-const char menu_225[] = "[Config TOT OSC]";   // 29
-const char menu_226[] = "OSC OPTION #1";      // 30
-const char menu_227[] = "MODE";               // 31
+const char menu_225[] = "[Config TOT OSC]";   // 34
+const char menu_226[] = "OSC OPTION #1";      // 35
+const char menu_227[] = "MODE";               // 36
+                                              // 37
 
-//const char menu_300[] = "[X MIDI CHNL #]";    // 19
-//const char menu_301[] = "[X CC #]";           // 20
+//const char menu_997[] = "MIDI/UART";          // 32
+//const char menu_998[] = "MIDI/USB";           // 33
+//const char menu_999[] = "OSC";                // 34
+//const char menu_110[] = "[X enabled]";        // 35
+//const char menu_111[] = "[X disabled]";       // 36
 
-// we can infer which parameter is being configured based on 
-// the value of 'selected'. 
+// we can deduce which parameter is being configured based on 
+// the current value of 'selected'. 
 //const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
 //
 static Bounce back = Bounce();
@@ -119,11 +125,11 @@ void configMIDICC() {
            param = 'X';
            CCnum = Settings->getParamSetting('X', 1);
            break;
-        case 18:
+        case 20:
            param = 'Y';
            CCnum = Settings->getParamSetting('Y', 1);
            break;
-        case 26:
+        case 30:
            param = 'T';
            CCnum = Settings->getParamSetting('T', 1);
            break;
@@ -167,7 +173,9 @@ void configMIDICC() {
          }
       }
    }
-   while(keypress != ENTER); // loop until user hits enter
+   while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+   if (keypress == BACK) return;
+
    switch (param) {
       case 'X':
          if (Settings->setXOption(1, CCnum) != 1) {
@@ -203,11 +211,11 @@ void configMIDIChannel() {
        param = 'X';
        CHnum = Settings->getParamSetting('X', 0);
        break;
-     case 17:
+     case 19:
        param = 'Y';
        CHnum = Settings->getParamSetting('Y', 0);
        break;
-     case 25:
+     case 29:
        param = 'T';
        CHnum = Settings->getParamSetting('T', 0);
        break;
@@ -257,7 +265,8 @@ void configMIDIChannel() {
        }
      }
   }
-  while(keypress != ENTER); // loop until user hits enter
+  while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+  if (keypress == BACK) return;
 
    switch (param) {
       case 'X':
@@ -295,11 +304,11 @@ void configINV()
           param = 'X';
           inv = Settings->getParamSetting('X', 2);
           break;
-     case 19:
+     case 21:
           param = 'Y';
           inv = Settings->getParamSetting('Y', 2);
           break;
-     case 27:
+     case 31:
           param = 'T';
           inv = Settings->getParamSetting('T', 2);
           break;
@@ -325,8 +334,9 @@ void configINV()
       inv = 0;
     }
   }
-  while (keypress != ENTER); // loop till user hits enter
-   
+  while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+   if (keypress == BACK) return;
+
    switch (param) {
       case 'X':
          if (Settings->setXOption(2, inv) != 1) {
@@ -364,19 +374,19 @@ void configMode()
   uint8_t mode;
   char param;
   int keypress;
-  if (selected == 12 || selected == 15) {
+  if (selected == 12 || selected == 16) {
        param = 'X';
        mode = Settings->getParamMode(param);
        Serial.println("X mode is ");
        Serial.print(mode);
   }
-  else if (selected == 20 || selected == 23) {
+  else if (selected == 22 || selected == 26) {
        param = 'Y';
        mode = Settings->getParamMode(param);
        Serial.println("Y mode is ");
        Serial.print(mode);
   }
-  else if (selected == 28 || selected == 31) {
+  else if (selected == 32 || selected == 36) {
        param = 'T';
        mode = Settings->getParamMode(param);
        Serial.print(mode);
@@ -426,8 +436,9 @@ void configMode()
    }
    else continue;
   }
-  while (keypress != ENTER); // loop till user hits enter
-   
+  while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+  if (keypress == BACK) return;
+
    switch (param) {
       case 'X':
          if (Settings->setXMode(mode) != 1) {
@@ -472,6 +483,70 @@ void configMode()
    lcd.print(" OK");
    delay(1000);
 } 
+void toggleOnOff() {
+  char param;
+  bool on;
+  int keypress;
+  if (selected == 13 || selected == 17) {
+       param = 'X';
+       on = Settings->isParamEnabled(param);
+  }
+  else if (selected == 23 || selected == 27) {
+       param = 'Y';
+       on = Settings->isParamEnabled(param);
+  }
+  else if (selected == 33 || selected == 37) {
+       param = 'T';
+       on = Settings->isParamEnabled(param);
+  }
+  else {
+     lcd.setCursor(0,0);
+     lcd.print("ERROR: invalid");
+     return;
+  }
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("[EN/DISABLE] ");
+  lcd.setCursor(15,0);
+  lcd.print(param);
+  do {
+    keypress = getButtonPress();
+    lcd.setCursor(1,1);
+    if (on == 0) {
+       lcd.print("DISABLED");
+    }
+    else {
+      lcd.print("ENABLED");
+    }
+    if ((keypress == UP || keypress == DOWN) && (on == false)) {
+      on = true;
+    }
+    else if ((keypress == UP || keypress == DOWN) && (on == true)) {
+      on = false;
+    }
+  }
+  while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+   if (keypress == BACK) return;
+
+  if (Settings->enOrDisableParam(param, on) != 1) {
+     lcd.setCursor(1,1);
+     lcd.print("ERROR");
+     return;
+  }
+
+  lcd.setCursor(1,1);
+  lcd.print(param);
+  lcd.print(" ");
+  if (on == false) {
+    lcd.print("DISABLED");
+  }
+  else {
+    lcd.print("ENABLED");
+  }
+  lcd.print(" OK");
+  delay(1000); // give user time to see confirmation of invert parameter setting
+}
 //void showStatus()
 //{
 //
@@ -482,42 +557,48 @@ MenuEntry menu[] =
    {menu_000, 4, 0, 0, 0, 0, 0}, // [Main Menu]   0
    {menu_001, 4, 1, 2, 5, 1, 0},                // 1
    {menu_002, 4, 1, 3, 2, 1, 0},                // 2
-   {menu_003, 4, 2, 3, 3, 1, 0}, // showStatus  // 3
+   {menu_003, 4, 2, 3, 3, 1, 0},                // 3
                                                   
    {menu_100, 4, 0, 0, 0, 0, 0}, // [Config param] // 4
    {menu_101, 4, 5, 6, xCfg, 1, 0},                // 5
    {menu_102, 4, 5, 7, yCfg, 1, 0},                // 6 
    {menu_103, 4, 6, 7, totCfg, 1, 0},              // 7
                                                   
-   {menu_200, 5, 0, 0, 0, 0, 0}, // [Config X]        // 8
-   {menu_201, 5, 9, 10,  9,  5, configMIDIChannel},   // 9           
-   {menu_202, 5, 9, 11, 10,  5, configMIDICC},        // 10
-   {menu_203, 5, 10, 12, 11, 5, configINV},           // 11
-   {menu_204, 5, 11, 12, 12, 5, configMode},          // 12
+   {menu_200, 6, 0, 0, 0, 0, 0}, // [Config X]        // 8
+   {menu_201, 6, 9, 10,  9,  5, configMIDIChannel},   // 9           
+   {menu_202, 6, 9, 11, 10,  5, configMIDICC},        // 10
+   {menu_203, 6, 10, 12, 11, 5, configINV},           // 11
+   {menu_204, 6, 11, 13, 12, 5, configMode},          // 12
+   {menu_209, 6, 12, 13, 13, 5, toggleOnOff},         // 13
 
-   {menu_205, 3, 0, 0, 0, 0, 0}, // [Config X OSC]    // 13
-   {menu_206, 3, 14, 15, 14, 5, 0},                   // 14
-   {menu_207, 3, 14, 15, 15, 5, configMode},          // 15
+   {menu_205, 4, 0, 0, 0, 0, 0}, // [Config X OSC]    // 14
+   {menu_206, 4, 15, 16, 15, 5, 0},                   // 15
+   {menu_207, 4, 15, 17, 16, 5, configMode},          // 16
+   {menu_209, 4, 16, 17, 17, 5, toggleOnOff},         // 17
                                                  
-   {menu_210, 5, 0, 0, 0, 0, 0}, // [Config Y]        // 16
-   {menu_211, 5, 17, 18, 17, 5, configMIDIChannel},   // 17
-   {menu_212, 5, 17, 19, 18, 5, configMIDICC},        // 18
-   {menu_213, 5, 18, 20, 19, 5, configINV},           // 19
-   {menu_214, 5, 19, 20, 20, 5, configMode},          // 20
+   {menu_210, 6, 0, 0, 0, 0, 0}, // [Config Y]        // 18
+   {menu_211, 6, 19, 20, 19, 5, configMIDIChannel},   // 19
+   {menu_212, 6, 19, 21, 20, 5, configMIDICC},        // 20
+   {menu_213, 6, 20, 22, 21, 5, configINV},           // 21
+   {menu_214, 6, 21, 23, 22, 5, configMode},          // 22
+   {menu_218, 6, 22, 23, 23, 5, toggleOnOff},         // 23
 
-   {menu_215, 3, 0, 0, 0, 0, 0}, // [Config Y OSC]    // 21
-   {menu_216, 3, 22, 23, 22, 5, 0},                   // 22
-   {menu_217, 3, 22, 23, 23, 5, configMode},          // 23
+   {menu_215, 4, 0, 0, 0, 0, 0}, // [Config Y OSC]    // 24
+   {menu_216, 4, 25, 26, 25, 5, 0},                   // 25
+   {menu_217, 4, 25, 27, 26, 5, configMode},          // 26
+   {menu_218, 4, 26, 27, 27, 5, toggleOnOff},         // 27
                                                 
-   {menu_220, 5, 0, 0, 0, 0, 0},  // [Config TOT]     // 24
-   {menu_221, 5, 25, 26, 25, 5, configMIDIChannel},   // 25
-   {menu_222, 5, 25, 27, 26, 5, configMIDICC},        // 26
-   {menu_223, 5, 26, 28, 27, 5, configINV},           // 27
-   {menu_224, 5, 27, 28, 28, 5, configMode},          // 28
+   {menu_220, 6, 0, 0, 0, 0, 0},  // [Config TOT]     // 28
+   {menu_221, 6, 29, 30, 29, 5, configMIDIChannel},   // 29
+   {menu_222, 6, 29, 31, 30, 5, configMIDICC},        // 30
+   {menu_223, 6, 30, 32, 31, 5, configINV},           // 31
+   {menu_224, 6, 31, 33, 32, 5, configMode},          // 32
+   {menu_228, 6, 32, 33, 33, 5, toggleOnOff},         // 33
 
-   {menu_225, 3, 0, 0, 0, 0, 0}, // [Config TOT OSC]  // 29
-   {menu_226, 3, 30, 31, 30, 5, 0},                   // 30
-   {menu_227, 3, 30, 31, 31, 5, configMode}           // 31
+   {menu_225, 4, 0, 0, 0, 0, 0}, // [Config TOT OSC]  // 34
+   {menu_226, 4, 35, 36, 35, 5, 0},                   // 35
+   {menu_227, 4, 35, 37, 36, 5, configMode},          // 36
+   {menu_228, 4, 36, 37, 37, 5, toggleOnOff},         // 37
 };
 void showMenu() {
    unsigned char from = 0;
@@ -563,29 +644,30 @@ void showMenu() {
       lcd.setCursor(0,1);
       lcd.print("selection!"); 
    }
-   delay(20);
+   delay(50);
 }
 
 void menuCfg() {
    if (Settings->getParamMode('X') == OSC) {
-      menu[5].enter = 14;
+      menu[5].enter = 15;
    }
    else {
       menu[5].enter = 9;
    }
    if (Settings->getParamMode('Y') == OSC) {
-      menu[6].enter = 22;
+      menu[6].enter = 25;
    }
    else {
-      menu[6].enter = 17;
+      menu[6].enter = 19;
    }
    if (Settings->getParamMode('T') == OSC) {
-      menu[7].enter = 30;
+      menu[7].enter = 35;
    }
    else {
-      menu[7].enter = 25;
+      menu[7].enter = 29;
    }
 }
+
 
 void browseMenu() {
    menuCfg();

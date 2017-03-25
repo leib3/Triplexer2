@@ -175,5 +175,53 @@
 
      return 1; // need to add error handling
    }
+   uint8_t tpxSettings::enOrDisableParam(char param, bool on)
+   {
+      switch (param) {
+         case 'X':
+            if (on == true) {
+               X.enabled = true;
+            }
+            else {
+               X.enabled = false;
+            }
+            break;
+         case 'Y':
+            if (on == true) {
+               Y.enabled = true;
+            }
+            else {
+               Y.enabled = false;
+            }
+            break;
+         case 'T':
+            if (on == true) {
+               TOT.enabled = true;
+            }
+            else {
+               TOT.enabled = false;
+            }
+            break;
+      }
+      return 1;
+       // need to add error handling
+   }
+   bool tpxSettings::isParamEnabled(char param)
+   {
+      switch (param) {
+         case 'X':
+            return X.enabled;
+            break;
+         case 'Y':
+            return Y.enabled;
+            break;
+         case 'T':
+            return TOT.enabled;
+            break;
+       
+         default: // error
+            return false;
+      }
+   }
 
 
