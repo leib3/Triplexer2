@@ -10,13 +10,7 @@
 // struct that is shared by both the menu and the load cell
 // input processing module (TODO)
 
-// each parameter (MIDI/USB, MIDI/UART, TOT) should be able to be assigned
-// to MIDI/USB, MIDI/UART, or OSC. For now, OSC and MIDI/USB should not
-// be in use at the same time. 
-// how does the user change the mode assigned to each parameter, and at what
-// time is this checked for validity?
-//
-// TODO: how to disable a parameter?
+
 // TODO: parameter status menu screen OR persistent symbol in corner of LCD
 // referring to which modes are active
 // see defines above... MIDIUSB = 0, MIDIUART = 1, OSC = 2
@@ -43,53 +37,60 @@
       // most likely done after user hits enter on mode selection screen
    {
       uint8_t temp[3] = {XMode, YMode, TOTMode};
-      uint8_t USBcount = 0;
+      bool OSCflag = false;
+      bool MIDIUSBflag = false;
       for (int i = 0; i < 3; ++i) {
-         if (temp[i] == MIDIUSB || temp[i] == OSC) {
-            ++USBcount;
+         if (temp[i] == MIDIUSB) {
+            MIDIUSBflag = true;
+         }
+         else if (temp[i] == OSC) {
+            OSCflag = true;
          }
          else continue;
       }
-      if (USBcount > 1) return false;
+      if (MIDIUSBflag && OSCflag) return false;
       else return true;
    }
 
       // These functions must report to the LCD menu logic if a mode combination is invalid. 
       // Try catch?
-   uint8_t tpxSettings::setXMode(uint8_t modeToSet)
+   uint8_t tpxSettings::setParamMode(char param, uint8_t modeToSet)
    {
-      // test for valid combination of modes with prospective mode change
-      if (isValid(modeToSet, Y.mode, TOT.mode)) {
-         X.mode = modeToSet;
-         return 1;
-      }
-      else {
-         Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
-         return -1;
+      switch (param) {
+         case 'X':
+            // test for valid combination of modes with prospective mode change
+            if (isValid(modeToSet, Y.mode, TOT.mode)) {
+               X.mode = modeToSet;
+               return 1;
+            }
+            else {
+               Serial.println("ERROR: MIDI/USB and OSC cannot be on at the same time");
+               return -1;
+            }
+        case 'Y':
+            if (isValid(X.mode, modeToSet, TOT.mode)) {
+               Y.mode = modeToSet;
+               return 1;
+            }
+            else {
+               Serial.println("ERROR: MIDI/USB and OSC cannot be on at the same time");
+               return -1;
+            }
+        case 'T':
+                      
+            if (isValid(X.mode, Y.mode, modeToSet)) {
+               TOT.mode = modeToSet;
+               return 1;
+            }
+            else {
+               Serial.println("ERROR: MIDI/USB and OSC cannot be on at the same time");
+              return -1;
+            }
+        default:
+            return -2; // error, invalid parameter
       }
    }
-   uint8_t tpxSettings::setYMode(uint8_t modeToSet)
-   {
-      if (isValid(X.mode, modeToSet, TOT.mode)) {
-         Y.mode = modeToSet;
-         return 1;
-      }
-      else {
-         Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
-         return -1;
-      }
-   }
-   uint8_t tpxSettings::setTOTMode(uint8_t modeToSet) 
-   {
-      if (isValid(X.mode, Y.mode, modeToSet)) {
-         TOT.mode = modeToSet;
-         return 1;
-      }
-      else {
-         Serial.println("invalid mode combination. Only one protocol that uses USB can be active at a time.");
-        return -1;
-      }
-   }
+   
    uint8_t tpxSettings::getParamMode(char param)
    {
       switch (param) {
@@ -157,23 +158,22 @@
       // doesn't allow the user to input invalid values for ex: a CC number.
       // Problem is the web front-end will. LUCKILY, IF WE'RE GOING TO DO IT RIGHT,
       // error checking can happen on the front-end itself!! Not in our program here!
-   uint8_t tpxSettings::setXOption(uint8_t option, uint8_t value) 
+   uint8_t tpxSettings::setParamOption(char param, uint8_t option, uint8_t value) 
    {
-     X.update(option, value);
-
-     return 1; // need to add error handling
-   }
-   uint8_t tpxSettings::setYOption(uint8_t option, uint8_t value) 
-   {
-     Y.update(option, value);
-
-     return 1; // need to add error handling
-   }
-   uint8_t tpxSettings::setTOTOption(uint8_t option, uint8_t value)
-   {
-     TOT.update(option, value);
-
-     return 1; // need to add error handling
+      switch (param) {
+         case 'X':
+            X.update(option, value);
+            break;
+         case 'Y':
+            Y.update(option, value);
+            break;
+         case 'T':
+            TOT.update(option, value);
+            break;
+         default:
+            return -1; // error
+      }
+      return 1;
    }
    uint8_t tpxSettings::enOrDisableParam(char param, bool on)
    {

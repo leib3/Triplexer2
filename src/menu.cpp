@@ -172,23 +172,23 @@ void configMIDICC() {
             --CCnum;
          }
       }
-   }
-   while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+   } while (keypress != ENTER && keypress != BACK); // loop till user hits enter or back
+
    if (keypress == BACK) return;
 
    switch (param) {
       case 'X':
-         if (Settings->setXOption(1, CCnum) != 1) {
+         if (Settings->setParamOption('X', 1, CCnum) != 1) {
             Serial.println("Error setting X CC num");
          }
          break;
       case 'Y':
-         if (Settings->setYOption(1, CCnum) != 1) {
+         if (Settings->setParamOption('Y', 1, CCnum) != 1) {
             Serial.println("Error setting Y CC num");
          }
          break;
       case 'T':
-         if (Settings->setTOTOption(1, CCnum) != 1) {
+         if (Settings->setParamOption('T', 1, CCnum) != 1) {
             Serial.println("Error setting TOT CC num");
          }
          break;
@@ -270,17 +270,17 @@ void configMIDIChannel() {
 
    switch (param) {
       case 'X':
-         if (Settings->setXOption(0, CHnum) != 1) {
+         if (Settings->setParamOption('X', 0, CHnum) != 1) {
             Serial.println("Error setting X channel num");
          }
          break;
       case 'Y':
-         if (Settings->setYOption(0, CHnum) != 1) {
+         if (Settings->setParamOption('Y', 0, CHnum) != 1) {
             Serial.println("Error setting Y channel num");
          }
          break;
       case 'T':
-         if (Settings->setTOTOption(0, CHnum) != 1) {
+         if (Settings->setParamOption('T', 0, CHnum) != 1) {
             Serial.println("Error setting TOT channel num");
          }
          break;
@@ -339,17 +339,17 @@ void configINV()
 
    switch (param) {
       case 'X':
-         if (Settings->setXOption(2, inv) != 1) {
+         if (Settings->setParamOption('X', 2, inv) != 1) {
             Serial.println("Error setting X channel num");
          }
          break;
       case 'Y':
-         if (Settings->setYOption(2, inv) != 1) {
+         if (Settings->setParamOption('Y', 2, inv) != 1) {
             Serial.println("Error setting Y channel num");
          }
          break;
       case 'T':
-         if (Settings->setTOTOption(2, inv) != 1) {
+         if (Settings->setParamOption('T', 2, inv) != 1) {
             Serial.println("Error setting TOT channel num");
          }
          break;
@@ -441,7 +441,7 @@ void configMode()
 
    switch (param) {
       case 'X':
-         if (Settings->setXMode(mode) != 1) {
+         if (Settings->setParamMode('X', mode) != 1) {
             lcd.clear();
             lcd.setCursor(0,0);
             lcd.print("USB in use");
@@ -452,7 +452,7 @@ void configMode()
          }
          break;
       case 'Y':
-         if (Settings->setYMode(mode) != 1) {
+         if (Settings->setParamMode('Y', mode) != 1) {
             lcd.clear();
             lcd.setCursor(0,0);
             lcd.print("USB in use");
@@ -463,7 +463,7 @@ void configMode()
          }
          break;
       case 'T':
-         if (Settings->setTOTMode(mode) != 1) {
+         if (Settings->setParamMode('T', mode) != 1) {
             lcd.clear();
             lcd.setCursor(0,0);
             lcd.print("USB in use");
@@ -517,7 +517,7 @@ void toggleOnOff() {
        lcd.print("DISABLED");
     }
     else {
-      lcd.print("ENABLED");
+      lcd.print("*ENABLED");
     }
     if ((keypress == UP || keypress == DOWN) && (on == false)) {
       on = true;

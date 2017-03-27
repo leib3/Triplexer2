@@ -32,13 +32,9 @@ class tpxSettings {
    public:
       bool isValid(uint8_t XMode, uint8_t YMode, uint8_t TOTMode); 
       bool isParamEnabled(char param);
-      uint8_t setXMode(uint8_t modeToSet);
-      uint8_t setYMode(uint8_t modeToSet);
-      uint8_t setTOTMode(uint8_t modeToSet);
+      uint8_t setParamMode(char param, uint8_t modeToSet);
       uint8_t getParamMode(char param);
       uint8_t getParamSetting(char param, uint8_t key);
-      uint8_t setXOption(uint8_t option, uint8_t value);
-      uint8_t setYOption(uint8_t option, uint8_t value);
-      uint8_t setTOTOption(uint8_t option, uint8_t value);
+      uint8_t setParamOption(char param, uint8_t option, uint8_t value);
       uint8_t enOrDisableParam(char param, bool on);
 };

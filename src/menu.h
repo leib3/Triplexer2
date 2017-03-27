@@ -1,7 +1,7 @@
 #include "stdint.h"
 
 #define PIN_ENTER 0 // digital pins for menu
-#define PIN_UP 6
+#define PIN_UP 7
 #define PIN_DOWN 1
 #define PIN_BACK 3
 
