@@ -12,11 +12,51 @@ const int readPinLR = A3; // uses ADC1
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
-static int w_t; // max total weight
+unsigned int ul_sens = 150; unsigned int ur_sens = 255; unsigned int ll_sens=200; unsigned int lr_sens = 245; //sensitivy values for each sensor, 0 to 255
+static int max_total; // max total weight
 volatile int adc0_state, adc1_state;   //state used in adc isr's
 
 ADC myAdc;
 IntervalTimer sampleTimer;
+
+
+//response curves and init functions for output. 256 points (with linear interpolation)
+unsigned short *x_response_curve;
+unsigned short *y_response_curve;
+unsigned short *t_response_curve;
+
+static unsigned short linear_response_curve[257] = {0};
+static unsigned short linear_w_edges_response_curve[257] = {0};
+static unsigned short log_response_curve[257] = {0};
+
+void linear_response_curve_init(){
+   short i;
+   for(i=0; i<256; i++)
+      linear_response_curve[i] = i<<8;
+   linear_response_curve[256] = 0xffff;
+}
+
+void linear_w_edges_response_curve_init(){
+   int i;
+   int n = 20;
+   int slope = (1<<16)/(256-2*n);
+   for(i=n; i<256-n; i++)
+      linear_w_edges_response_curve[i] = linear_w_edges_response_curve[i-1]+slope;
+   for(i = 256 - n; i<257; i++)
+       linear_w_edges_response_curve[i] = (1<<16) - 1; 
+}
+
+void log_response_curve_init(){
+   double multiplier = 0.0;
+   double previous = 1.0;
+   int i;
+   log_response_curve[0] = 1; //initial value
+   multiplier = pow((double)(1<<16), 1.0/256.0);
+   for(i = 1; i<=256; i++){
+      previous =  previous*multiplier;
+      log_response_curve[i] = (unsigned short)previous;
+   }
+}
 
 
 void adcinit(){
@@ -73,17 +113,24 @@ void adcinit(){
     //adc->enableCompare(1.0/3.3*adc->getMaxValue(ADC_1), 0, ADC_1); // measurement will be ready if value < 1.0V
     //adc->enableCompareRange(1.0*adc->getMaxValue(ADC_1)/3.3, 2.0*adc->getMaxValue(ADC_1)/3.3, 0, 1, ADC_1); // ready if value lies out of [1.0,2.0] V
 
-
+    linear_response_curve_init();
+    linear_w_edges_response_curve_init();
+    log_response_curve_init();
     // If you enable interrupts, note that the isr will read the result, so that isComplete() will return false (most of the time)
     //also note you can't use the basic blocking analogRead function without disabling interrupts first.
     adc->enableInterrupts(ADC_0);
     adc->enableInterrupts(ADC_1);
-
+    
 }
 
 void timerinit(){
    sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
    sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
+   x_response_curve = linear_w_edges_response_curve;
+   y_response_curve = linear_w_edges_response_curve;
+   t_response_curve = log_response_curve;
+   Serial.println("log response 256 = ");
+   Serial.println(log_response_curve[256], HEX);
 }
 
 //called by adcCalibrate
@@ -105,7 +152,7 @@ void calibrateZero(void){
 
 //called by adcCalibrate
 void calibrateMax(void){
-    int m_ul, m_ur, m_ll, m_lr, w_ul, w_ur, w_ll, w_lr;
+    int m_ul, m_ur, m_ll, m_lr;
     m_ul = m_ur = m_ll = m_lr = 0;
     for(int i = 0; i<256; i++){
        m_ul += myAdc.analogRead(A0);
@@ -115,21 +162,21 @@ void calibrateMax(void){
        delayMicroseconds(3910);  // =  3.91 ms   (*256 = 1 second)
     }
 //now we have an average of sorts for each corner. Use these to set max total weight, 
-//and individual weights for weighted avgs of corners
-    m_ul = (1<<15) / ((m_ul>>8) - z_ul); 
-    m_ul = w_ul < 1 ? 1 : w_ul;
-    m_ur = (1<<15) / ((m_ur>>8) - z_ur);
-    m_ur = w_ur < 1 ? 1 : w_ur;
-    m_ll = (1<<15) / ((m_ll>>8) - z_ll);
-    m_ll = w_ll < 1 ? 1 : w_ll;
-    m_lr = (1<<15) / ((m_lr>>8) - z_lr);
-    m_lr = w_lr < 1 ? 1 : w_lr;
-    w_t = w_ul+w_ur_w_ll+w_lr;
+    m_ul =(m_ul>>8) - z_ul; 
+    m_ul = ((int)m_ul) < 0 ? 0 : m_ul;
+    m_ur =(m_ur>>8) - z_ur; 
+    m_ur = ((int)m_ur) < 0 ? 0 : m_ur;
+    m_ll =(m_ll>>8) - z_ll; 
+    m_ll = ((int)m_ll) < 0 ? 0 : m_ll;
+    m_lr = (m_lr>>8) - z_lr; 
+    m_lr = ((int)m_lr) < 0 ? 0 : m_lr;
+    //add, scaling by sensitivity for each sensor
+    max_total = m_ul*ul_sens + m_ur*ur_sens+m_lr*lr_sens+m_ll*ll_sens;
 }
 
 
 void adcCalibrate(){
-//using LED indication for now. Use display later?
+//using LED indication for now. TODO Use display later.
     //turn off interrupts for timer and adc
     myAdc.disableInterrupts(ADC_0);
     myAdc.disableInterrupts(ADC_1);
@@ -149,29 +196,21 @@ void adcCalibrate(){
     calibrateMax();
     //LED off
     digitalWriteFast(13, LOW);
-    //turn on interrupts for timer and adc
-
-//print values for debugging
-    Serial.println("z_ul = ");
+/*
+    //print zero and max value for debugging
+    Serial.print("zeros are: z_ul=");
     Serial.println(z_ul);
-    Serial.println("w_ul = ");
-    Serial.println(w_ul);
-
-    Serial.println("z_ur = ");
+    Serial.print("z_ur=");
     Serial.println(z_ur);
-    Serial.println("w_ur = ");
-    Serial.println(w_ur);
-
-    Serial.println("z_ll = ");
+    Serial.print("z_ll=");
     Serial.println(z_ll);
-    Serial.println("w_ll = ");
-    Serial.println(w_ll);
-
-    Serial.println("z_lr = ");
+    Serial.print("z_lr=");
     Serial.println(z_lr);
-    Serial.println("w_lr = ");
-    Serial.println(w_lr);
-
+    Serial.println("\n\nmax value is: ");
+    Serial.println(max_total);
+    Serial.print("\n\n");
+*/
+    //turn on interrupts for timer and adc
     myAdc.enableInterrupts(ADC_0);
     myAdc.enableInterrupts(ADC_1);
     timerinit();
@@ -180,43 +219,71 @@ void adcCalibrate(){
 
 
 void sampleTimer_isr(){
-   if(adc1_state == 1){
+   static int current_buffer_i = 0;
+   //buffers for output index values
+   static unsigned int x_index_buf[BUFSZ] = {0};
+   static unsigned int y_index_buf[BUFSZ] = {0};
+   static unsigned int t_index_buf[BUFSZ] = {0};
+   //TODO this should change to check output format for each of x, y, t- OSC, MIDI, MIDIUSB, and INVERT
+   //and call appropriate output functions
+   unsigned int x, y, t, //final output values
+   ul_zc, ur_zc, ll_zc, lr_zc, //zero-corrected values
+   ul_norm, ur_norm, ll_norm, lr_norm, t_norm, //for values normalized by sensitivity of each sensor
+   old_x_index, old_y_index, old_t_index,
+   new_x_index, new_y_index, new_t_index, //for index into response curve 
+   x_index, y_index, t_index, //actual index values
+   x_offset, y_offset, t_offset; //actual offset values (for interpolation in response curves) 
+   static unsigned int x_buf_sum=0, y_buf_sum=0, t_buf_sum = 0; //for easy averaging 
+   //get zero-corrected values;
+   ul_zc = ul - z_ul; 
+   ur_zc = ur - z_ul;
+   ll_zc = ll - z_ll;
+   lr_zc = lr - z_lr;
+   ul_zc = ((int)ul_zc) < 0 ? 0 : ul_zc;
+   ur_zc = ((int)ur_zc) < 0 ? 0 : ur_zc;
+   ll_zc = ((int)ll_zc) < 0 ? 0 : ll_zc;
+   lr_zc = ((int)lr_zc) < 0 ? 0 : lr_zc;
+   //normalize using sensitivity values
+   ul_norm = ul_zc * ul_sens;
+   ur_norm = ur_zc * ur_sens;
+   ll_norm = ll_zc * ll_sens;
+   lr_norm = lr_zc * lr_sens;
+   //calculate new x, y, and t indices
+   t_norm = ul_norm+ur_norm+ll_norm+lr_norm;
+   if(t_norm == 0) t_norm = 1; //avoid divide-by-zero errors
+   new_x_index = ((((long long)ur_norm + (long long)lr_norm)<<16)/(long long)t_norm ); 
+   new_y_index = (( ( (long long)ul_norm + (long long)ur_norm)<<16)/(long long)t_norm );    
+   new_t_index =     (((long long)t_norm)<<16)  / max_total ;
+   if(new_t_index >= 1<<16){
+      new_t_index = 0xffff; 
+   }
+   //calculate average index and offset using buffer
+   old_x_index = x_index_buf[current_buffer_i];
+   old_y_index = y_index_buf[current_buffer_i];
+   old_t_index = t_index_buf[current_buffer_i];
+   x_index_buf[current_buffer_i]= new_x_index;
+   y_index_buf[current_buffer_i]= new_y_index;
+   t_index_buf[current_buffer_i]= new_t_index;
+   current_buffer_i = (current_buffer_i+1)&(BUFSZ-1);  //increment buffer index for next iteration
+   x_buf_sum += new_x_index - old_x_index;
+   y_buf_sum += new_y_index - old_y_index;
+   t_buf_sum += new_t_index - old_t_index;
+   //get index and offset
+   x_index = x_buf_sum >> (8+BUFSZBITS);
+   y_index = y_buf_sum >> (8+BUFSZBITS);
+   t_index = t_buf_sum >> (8+BUFSZBITS);
+   x_offset = (x_buf_sum >> (BUFSZBITS)) & 0xff;
+   y_offset = (y_buf_sum >> (BUFSZBITS)) & 0xff;
+   t_offset = (t_buf_sum >> (BUFSZBITS)) & 0xff;
+   //now do linear interpolation from response curve
+   x = x_response_curve[x_index]+ ((x_response_curve[x_index+1]-x_response_curve[x_index] )*x_offset  >> 8);
+   y = y_response_curve[y_index]+ ((y_response_curve[y_index+1]-y_response_curve[y_index] )*y_offset  >> 8);
+   t = t_response_curve[t_index]+ ((t_response_curve[t_index+1]-t_response_curve[t_index] )*t_offset  >> 8);
+//output to osc, midi, or midi over usb
+   oscsend3(x, y, t);
+//change adc states
    adc0_state = 0;
    adc1_state = 0;
-   //TODO this should change to check output format for each of x, y, t
-   //and call appropriate output functions
-   //calculate 16-bit values-put this in a function!
-   unsigned int x, y, t, ul_norm, ur_norm, ll_norm, lr_norm, t_norm;
-   int lshiftamt = 16;  //(multiplier = 2^lshiftamt)
-   ul_norm = (int)ul-z_ul > 0 ? ul-z_ul: 0;  //norm values will always be less than 2^16
-   ur_norm = (int)ur-z_ur > 0 ? ur-z_ur: 0;
-   ll_norm = (int)ll-z_ll > 0 ? ll-z_ll: 0;
-   lr_norm = (int)lr-z_lr > 0 ? lr-z_lr: 0;
-   t_norm = w_ul*ul_norm + w_ur*ur_norm + w_ll*ll_norm + w_lr*lr_norm;
-   if (t_norm == 0) t_norm = 1; //avoid divde by 0
-   x = ((w_ur*ur_norm + w_lr*lr_norm) << lshiftamt) / t_norm;
-   x = x >= (1<<16) ? (1<<16)-1 : x;  //prevents x from being larger than the guaranteed max value of 2^16 -1.
-   y = ((w_ul*ul_norm + w_ur*ur_norm) << lshiftamt) / t_norm;
-   y = y >= (1<<16) ? (1<<16)-1 : y;  //prevents y from being larger than the guaranteed max value of 2^16 -1.
-   t = (t_norm)>>1; // = max t_norm = 2^17. l shift amt - 2^16. t = (t_norm/max t_norm)<<lshiftamt = t_norm >> 1;
-   t = t >= (1<<16) ? (1<<16)-1 : t;  //prevents t from being larger than the guaranteed max value of 2^16 -1.
-//output to osc, midi, or midi over usb
-   //oscsend3(x, y, t);
-/*
-   //print values for debugging
-   Serial.print("\n\r");
-   Serial.println( ul);
-   Serial.println( ur);
-   Serial.println(ll);
-   Serial.println( lr);
-   Serial.print("\n\r");
-   Serial.println( ul_norm);
-   Serial.println( ur_norm);
-   Serial.println(ll_norm);
-   Serial.println( lr_norm);
-   Serial.print("\n\r");
-*/
-   }
    myAdc.startSingleRead(readPinUL, ADC_0);
    myAdc.startSingleRead(readPinLL, ADC_1);
 }
@@ -227,7 +294,7 @@ void sampleTimer_isr(){
 //they are designed to work with a separate timer interrupt, which starts the first read.
 void adc0_isr(){
    if(adc0_state == 0){
-      adc0_state += 1;
+      adc0_state = 1;
       ul = myAdc.adc0->readSingle();
       myAdc.startSingleRead(readPinUR, ADC_0);
    } else
@@ -236,7 +303,7 @@ void adc0_isr(){
 
 void adc1_isr(){
    if(adc1_state == 0){
-      adc1_state += 1;
+      adc1_state = 1;
       ll = myAdc.adc1->readSingle();
       myAdc.startSingleRead(readPinLR, ADC_1);
    } else

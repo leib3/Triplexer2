@@ -30,13 +30,12 @@ void  init() {
    Serial.println("Hello from outside Arduino!");
 	pinMode(13, OUTPUT);
    pinMode(0, INPUT);
-   digitalWriteFast(13, HIGH);
+   digitalWriteFast(13, LOW);
    lcd.begin(16,2);
-   //attachInterrupt(0, ISRtest, CHANGE);
   // usbMIDI.sendNoteOn(60, 99, channel);
   // usbMIDI.sendControlChange(5, 50, channel);
    //raw = (int *)malloc(sizeof(int));
-   showMenu();
+   //showMenu();
 }
 
 
@@ -45,9 +44,11 @@ void  init() {
 extern "C" int main() 
 {
    init();
+   delayMicroseconds(5000000);
    adcinit();
    oscinit();
    timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
+   adcCalibrate();
    while (1) {
       /*browseMenu();
       if (usbMIDI.read() != 0) {
@@ -56,7 +57,7 @@ extern "C" int main()
          Serial.print("MIDI channel ");
          Serial.println(usbMIDI.getChannel());
       } */
-   delayMicroseconds(1000000);
+   //delayMicroseconds(1000000);
 
    } 
 }
