@@ -1,10 +1,13 @@
 #include <stdint.h>
 #include <map>
-
+// convenient defines to pass to setParamMode, get from getParamMode 
 #define MIDIUSB 0
 #define MIDIUART 1
 #define OSC 2
-
+// convenient defines to pass to getParamOption, setParamOption, which take uint8's
+#define MIDICHNL 0
+#define MIDICC 1
+#define INV 2
 class param {
    private:
       std::map<uint8_t, uint8_t> settings;

@@ -123,15 +123,15 @@ void configMIDICC() {
    switch (selected) {
         case 10:
            param = 'X';
-           CCnum = Settings->getParamSetting('X', 1);
+           CCnum = Settings->getParamSetting('X', MIDICC);
            break;
         case 20:
            param = 'Y';
-           CCnum = Settings->getParamSetting('Y', 1);
+           CCnum = Settings->getParamSetting('Y', MIDICC);
            break;
         case 30:
            param = 'T';
-           CCnum = Settings->getParamSetting('T', 1);
+           CCnum = Settings->getParamSetting('T', MIDICC);
            break;
    }
    lcd.clear();
@@ -178,17 +178,17 @@ void configMIDICC() {
 
    switch (param) {
       case 'X':
-         if (Settings->setParamOption('X', 1, CCnum) != 1) {
+         if (Settings->setParamOption('X', MIDICC, CCnum) != 1) {
             Serial.println("Error setting X CC num");
          }
          break;
       case 'Y':
-         if (Settings->setParamOption('Y', 1, CCnum) != 1) {
+         if (Settings->setParamOption('Y', MIDICC, CCnum) != 1) {
             Serial.println("Error setting Y CC num");
          }
          break;
       case 'T':
-         if (Settings->setParamOption('T', 1, CCnum) != 1) {
+         if (Settings->setParamOption('T', MIDICC, CCnum) != 1) {
             Serial.println("Error setting TOT CC num");
          }
          break;
@@ -209,15 +209,15 @@ void configMIDIChannel() {
   switch (selected) {
      case 9:
        param = 'X';
-       CHnum = Settings->getParamSetting('X', 0);
+       CHnum = Settings->getParamSetting('X', MIDICHNL);
        break;
      case 19:
        param = 'Y';
-       CHnum = Settings->getParamSetting('Y', 0);
+       CHnum = Settings->getParamSetting('Y', MIDICHNL);
        break;
      case 29:
        param = 'T';
-       CHnum = Settings->getParamSetting('T', 0);
+       CHnum = Settings->getParamSetting('T', MIDICHNL);
        break;
   }
 
@@ -270,17 +270,17 @@ void configMIDIChannel() {
 
    switch (param) {
       case 'X':
-         if (Settings->setParamOption('X', 0, CHnum) != 1) {
+         if (Settings->setParamOption('X', MIDICHNL, CHnum) != 1) {
             Serial.println("Error setting X channel num");
          }
          break;
       case 'Y':
-         if (Settings->setParamOption('Y', 0, CHnum) != 1) {
+         if (Settings->setParamOption('Y', MIDICHNL, CHnum) != 1) {
             Serial.println("Error setting Y channel num");
          }
          break;
       case 'T':
-         if (Settings->setParamOption('T', 0, CHnum) != 1) {
+         if (Settings->setParamOption('T', MIDICHNL, CHnum) != 1) {
             Serial.println("Error setting TOT channel num");
          }
          break;
@@ -302,15 +302,15 @@ void configINV()
   switch (selected) {
      case 11:
           param = 'X';
-          inv = Settings->getParamSetting('X', 2);
+          inv = Settings->getParamSetting('X', INV);
           break;
      case 21:
           param = 'Y';
-          inv = Settings->getParamSetting('Y', 2);
+          inv = Settings->getParamSetting('Y', INV);
           break;
      case 31:
           param = 'T';
-          inv = Settings->getParamSetting('T', 2);
+          inv = Settings->getParamSetting('T', INV);
           break;
   }
   lcd.clear();
@@ -339,17 +339,17 @@ void configINV()
 
    switch (param) {
       case 'X':
-         if (Settings->setParamOption('X', 2, inv) != 1) {
+         if (Settings->setParamOption('X', INV, inv) != 1) {
             Serial.println("Error setting X channel num");
          }
          break;
       case 'Y':
-         if (Settings->setParamOption('Y', 2, inv) != 1) {
+         if (Settings->setParamOption('Y', INV, inv) != 1) {
             Serial.println("Error setting Y channel num");
          }
          break;
       case 'T':
-         if (Settings->setParamOption('T', 2, inv) != 1) {
+         if (Settings->setParamOption('T', INV, inv) != 1) {
             Serial.println("Error setting TOT channel num");
          }
          break;

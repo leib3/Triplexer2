@@ -3,20 +3,10 @@
 
 // modes defines for param class member mode
 
-// Create global struct or pointer to global struct 
-// containing current MIDI channel #s and CC #s for each 
-// control parameter, plus other relevant status info for
-// debugging purposes. There will be a single instance of this
-// struct that is shared by both the menu and the load cell
-// input processing module (TODO)
-
-
 // TODO: parameter status menu screen OR persistent symbol in corner of LCD
 // referring to which modes are active
-// see defines above... MIDIUSB = 0, MIDIUART = 1, OSC = 2
+// see defines in settings.h... MIDIUSB = 0, MIDIUART = 1, OSC = 2
 //
-// trying to think ahead here: MIDIUSB/MIDIUART have the same settings. When switching
-// a parameter from one of these two to the other, should we clear the hash table? I want to say no.
 // If we switch from either MIDIUSB or MIDIUART to OSC, we shouldn't have to erase it IFF
 // OSC options are stored at different indices from the MIDI options.
 // How much control do we give the user wrt OSC here?
