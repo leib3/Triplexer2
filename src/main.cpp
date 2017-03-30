@@ -8,12 +8,11 @@
 
 
 
-// RS, E, D4, D5, D6, D7
-//LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 //static int * raw;
 const int channel = 1;
 
 //display macros
+               // RS, E, D4, D5, D6, D7
 LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 
 #define btnRIGHT  0
@@ -25,12 +24,17 @@ LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 
 
 
+
+
 void  init() {
    Serial.begin(9600);
-   Serial.println("Hello from outside Arduino!");
-	pinMode(13, OUTPUT);
+   pinMode(13, OUTPUT);
    pinMode(0, INPUT);
    digitalWriteFast(13, LOW);
+   pinMode(ENTER, INPUT); // menu buttons
+   pinMode(UP, INPUT);
+   pinMode(DOWN, INPUT);
+   pinMode(BACK, INPUT);
    lcd.begin(16,2);
   // usbMIDI.sendNoteOn(60, 99, channel);
   // usbMIDI.sendControlChange(5, 50, channel);
@@ -38,27 +42,25 @@ void  init() {
    //showMenu();
 }
 
-
-
-
 extern "C" int main() 
 {
    init();
    delayMicroseconds(5000000);
    adcinit();
    oscinit();
+   debounceInit();
    timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
    adcCalibrate();
    while (1) {
-      /*browseMenu();
-      if (usbMIDI.read() != 0) {
+      browseMenu();
+      /*if (usbMIDI.read() != 0) {
          Serial.print("Rcvd type ");
          Serial.println(usbMIDI.getType());
          Serial.print("MIDI channel ");
          Serial.println(usbMIDI.getChannel());
-      } */
+      } 
+      */
    //delayMicroseconds(1000000);
-
    } 
 }
 

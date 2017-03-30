@@ -61,7 +61,7 @@ CFLAGS =
 LDFLAGS = -Os -Wl,--gc-sections -mthumb
 
 # additional libraries to link
-LIBS = -lm
+LIBS = -lm -lstdc++
 
 # compiler options specific to teensy version
 ifeq ($(TEENSY), 30)
