@@ -12,7 +12,7 @@ const int readPinLR = A3; // uses ADC1
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
-unsigned int ul_sens = 150; unsigned int ur_sens = 255; unsigned int ll_sens=200; unsigned int lr_sens = 245; //sensitivy values for each sensor, 0 to 255
+unsigned int ul_sens = 100; unsigned int ur_sens = 255; unsigned int ll_sens=100; unsigned int lr_sens = 245; //sensitivy values for each sensor, 0 to 255
 static int max_total; // max total weight
 volatile int adc0_state, adc1_state;   //state used in adc isr's
 
