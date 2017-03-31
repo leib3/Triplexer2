@@ -17,6 +17,20 @@ SLIPEncodedUSBSerial SLIPSerial( Serial ); //global SLIP thing
 
 // SlipEncodedUSBSerial test;
 
+static OSCBundle globalBundle;
+
+
+void oscadd1(char * target, int value){
+   globalBundle.add(target).add((int32_t)value);
+}
+
+void oscsend(){
+    SLIPSerial.beginPacket();
+    globalBundle.send(SLIPSerial); // send the bytes to the SLIP stream
+    SLIPSerial.endPacket();        // mark the end of the OSC Packet
+    globalBundle.empty();          // empty the bundle to free room for a new one
+}
+
 void oscinit() {
   SLIPSerial.begin(9600);   // set this as high as you can reliably run on your platform
 }
@@ -31,6 +45,7 @@ void oscsend1(unsigned short value){
   SLIPSerial.endPacket(); // mark the end of the OSC Packet
   msg.empty(); // free space occupied by message
 }
+
 
 void oscsend3(unsigned short x, unsigned short y, unsigned short t){
     OSCBundle myBundle;

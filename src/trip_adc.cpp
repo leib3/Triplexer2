@@ -2,6 +2,9 @@
 #include "trip_osc.h"
 #include "WProgram.h"
 #include "settings.h"
+#include "MIDI.h"
+
+#define MIDICLOCKDIV 50   //UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
 
 //this is the current system settings object
 extern tpxSettings * Settings;
@@ -135,9 +138,19 @@ void timerinit(){
    t_response_curve = log_response_curve;
 //dummy settings for testing without Zach
 //delete all of this later
-   Settings->setParamOption('X', INV, 1);
-   Settings->setParamOption('Y', INV, 1);
-   Settings->setParamOption('T', INV, 1);
+   Settings->setParamOption('X', INV, 0);
+   Settings->setParamOption('Y', INV, 0);
+   Settings->setParamOption('T', INV, 0);
+   Settings->setParamOption('X', MIDICC, 1);
+   Settings->setParamOption('Y', MIDICC, 2);
+   Settings->setParamOption('T', MIDICC, 3);
+   Settings->setParamMode('X', MIDIUSB);
+   Settings->setParamMode('Y', MIDIUSB);
+   Settings->setParamMode('T', MIDIUSB);
+   Settings->enOrDisableParam('X', 1);
+   Settings->enOrDisableParam('Y', 1);
+   Settings->enOrDisableParam('T', 1);
+   
 //stop deleting here!
 }
 
@@ -232,16 +245,18 @@ void sampleTimer_isr(){
    static unsigned int x_index_buf[BUFSZ] = {0};
    static unsigned int y_index_buf[BUFSZ] = {0};
    static unsigned int t_index_buf[BUFSZ] = {0};
+   bool oscSendEnable = 0;
    //TODO this should change to check output format for each of x, y, t- OSC, MIDI, MIDIUSB, and INVERT
    //and call appropriate output functions
    unsigned int x, y, t, //final output values
    ul_zc, ur_zc, ll_zc, lr_zc, //zero-corrected values
    ul_norm, ur_norm, ll_norm, lr_norm, t_norm, //for values normalized by sensitivity of each sensor
    old_x_index, old_y_index, old_t_index,
-   new_x_index, new_y_index, new_t_index, //for index into response curve 
-   x_index, y_index, t_index, //actual index values
+   new_x_index, new_y_index, new_t_index, //for individual index into response curve 
+   x_index, y_index, t_index, //actual averaged index values
    x_offset, y_offset, t_offset; //actual offset values (for interpolation in response curves) 
    static unsigned int x_buf_sum=0, y_buf_sum=0, t_buf_sum = 0; //for easy averaging 
+   static int midiClockDivider = 0;
    //get zero-corrected values;
    ul_zc = ul - z_ul; 
    ur_zc = ur - z_ul;
@@ -287,6 +302,7 @@ void sampleTimer_isr(){
    x = x_response_curve[x_index]+ ((x_response_curve[x_index+1]-x_response_curve[x_index] )*x_offset  >> 8);
    y = y_response_curve[y_index]+ ((y_response_curve[y_index+1]-y_response_curve[y_index] )*y_offset  >> 8);
    t = t_response_curve[t_index]+ ((t_response_curve[t_index+1]-t_response_curve[t_index] )*t_offset  >> 8);
+   //invert as desired
    if(Settings->getParamSetting('X', INV))
       x = 0xffff - x;
    if(Settings->getParamSetting('Y', INV))
@@ -294,21 +310,61 @@ void sampleTimer_isr(){
    if(Settings->getParamSetting('T', INV))
       t = 0xffff - t;
 
-//OSC OUTPUT
-   //output to osc, midi, or midi over usb. TODO change this to check for individual enables. Saves some malloc-ing inside the OSC functions
-   if(Settings->getParamMode('X') == OSC || Settings->getParamMode('Y') = OSC || Settings->getParamMode('T') = OSC)
-       oscsend3(x, y, t);
-
-//USB MIDI OUTPUT
-   //send cc function has the following arg order : (cc#,value,chan)
-   if(Settings->getParamMode('X') == MIDIUSB && Settings->isParamEnabled('X'))
-      usbMIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL)); 
-   if(Settings->getParamMode('Y') == MIDIUSB && Settings->isParamEnabled('Y'))
-      usbMIDI.sendControlChange(Settings->getParamSetting('Y', MIDICC), (char)(x>>9), Settings->getParamSetting('Y', MIDICHNL)); 
-   if(Settings->getParamMode('T') == MIDIUSB && Settings->isParamEnabled('T'))
-      usbMIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (char)(x>>9), Settings->getParamSetting('T', MIDICHNL)); 
-
-//UART MIDI OUTPUT
+//OUTPUT SECTION
+   midiClockDivider = ++midiClockDivider % MIDICLOCKDIV;
+   if(Settings->isParamEnabled('X')){
+      switch(Settings->getParamMode('X')){
+         case OSC:
+            oscadd1("/teensy/x", x);
+            oscSendEnable = 1;
+            break;
+         case MIDIUSB:
+               usbMIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL)); 
+            break;
+         case MIDIUART:
+            if(!(midiClockDivider))
+               MIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL));
+            break;
+         default: 
+            break;
+      }
+   }
+   if(Settings->isParamEnabled('Y')){
+      switch(Settings->getParamMode('Y')){
+         case OSC:
+            oscadd1("/teensy/y", y);
+            oscSendEnable = 1;
+            break;
+         case MIDIUSB:
+            usbMIDI.sendControlChange(Settings->getParamSetting('Y', MIDICC), (char)(y>>9), Settings->getParamSetting('Y', MIDICHNL)); 
+            break;
+         case MIDIUART:
+            if(!(midiClockDivider))
+               MIDI.sendControlChange(Settings->getParamSetting('Y', MIDICC), (char)(y>>9), Settings->getParamSetting('Y', MIDICHNL));
+            break;
+         default: 
+            break;
+      }
+   }
+   if(Settings->isParamEnabled('T')){
+      switch(Settings->getParamMode('T')){
+         case OSC:
+            oscadd1("/teensy/t", t);
+            oscSendEnable = 1;
+            break;
+         case MIDIUSB:
+            usbMIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (char)(t>>9), Settings->getParamSetting('T', MIDICHNL)); 
+            break;
+         case MIDIUART:
+            if(!(midiClockDivider))
+               MIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (char)(t>>9), Settings->getParamSetting('T', MIDICHNL));
+            break;
+         default: 
+            break;
+      }
+   }
+   if(oscSendEnable)
+       oscsend();
 
 //change adc states
    adc0_state = 0;
