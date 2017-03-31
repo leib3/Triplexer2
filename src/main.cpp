@@ -29,13 +29,16 @@ LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 void  init() {
    Serial.begin(9600);
    pinMode(13, OUTPUT);
-   pinMode(0, INPUT);
+   //pinMode(0, INPUT);
    digitalWriteFast(13, LOW);
+   /* commented out menu stuff for now. Put back in with Zach whenever we meet
    pinMode(ENTER, INPUT); // menu buttons
    pinMode(UP, INPUT);
    pinMode(DOWN, INPUT);
    pinMode(BACK, INPUT);
    lcd.begin(16,2);
+
+  */
   // usbMIDI.sendNoteOn(60, 99, channel);
   // usbMIDI.sendControlChange(5, 50, channel);
    //raw = (int *)malloc(sizeof(int));
@@ -52,7 +55,7 @@ extern "C" int main()
    timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
    adcCalibrate();
    while (1) {
-      browseMenu();
+      //browseMenu();
       /*if (usbMIDI.read() != 0) {
          Serial.print("Rcvd type ");
          Serial.println(usbMIDI.getType());

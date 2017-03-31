@@ -1,7 +1,10 @@
 #include "trip_adc.h"
 #include "trip_osc.h"
 #include "WProgram.h"
+#include "settings.h"
 
+//this is the current system settings object
+extern tpxSettings * Settings;
 
 //adc pin defs
 const int readPinUL = A0; // uses ADC0
@@ -43,7 +46,7 @@ void linear_w_edges_response_curve_init(){
    for(i=n; i<256-n; i++)
       linear_w_edges_response_curve[i] = linear_w_edges_response_curve[i-1]+slope;
    for(i = 256 - n; i<257; i++)
-       linear_w_edges_response_curve[i] = (1<<16) - 1; 
+       linear_w_edges_response_curve[i] = 0xffff; 
 }
 
 void log_response_curve_init(){
@@ -52,10 +55,11 @@ void log_response_curve_init(){
    int i;
    log_response_curve[0] = 1; //initial value
    multiplier = pow((double)(1<<16), 1.0/256.0);
-   for(i = 1; i<=256; i++){
+   for(i = 1; i<256; i++){
       previous =  previous*multiplier;
       log_response_curve[i] = (unsigned short)previous;
    }
+   log_response_curve[256] = (unsigned short)0xffff;
 }
 
 
@@ -129,8 +133,12 @@ void timerinit(){
    x_response_curve = linear_w_edges_response_curve;
    y_response_curve = linear_w_edges_response_curve;
    t_response_curve = log_response_curve;
-   Serial.println("log response 256 = ");
-   Serial.println(log_response_curve[256], HEX);
+//dummy settings for testing without Zach
+//delete all of this later
+   Settings->setParamOption('X', INV, 1);
+   Settings->setParamOption('Y', INV, 1);
+   Settings->setParamOption('T', INV, 1);
+//stop deleting here!
 }
 
 //called by adcCalibrate
@@ -279,8 +287,29 @@ void sampleTimer_isr(){
    x = x_response_curve[x_index]+ ((x_response_curve[x_index+1]-x_response_curve[x_index] )*x_offset  >> 8);
    y = y_response_curve[y_index]+ ((y_response_curve[y_index+1]-y_response_curve[y_index] )*y_offset  >> 8);
    t = t_response_curve[t_index]+ ((t_response_curve[t_index+1]-t_response_curve[t_index] )*t_offset  >> 8);
-//output to osc, midi, or midi over usb
-   oscsend3(x, y, t);
+   if(Settings->getParamSetting('X', INV))
+      x = 0xffff - x;
+   if(Settings->getParamSetting('Y', INV))
+      y = 0xffff - y;
+   if(Settings->getParamSetting('T', INV))
+      t = 0xffff - t;
+
+//OSC OUTPUT
+   //output to osc, midi, or midi over usb. TODO change this to check for individual enables. Saves some malloc-ing inside the OSC functions
+   if(Settings->getParamMode('X') == OSC || Settings->getParamMode('Y') = OSC || Settings->getParamMode('T') = OSC)
+       oscsend3(x, y, t);
+
+//USB MIDI OUTPUT
+   //send cc function has the following arg order : (cc#,value,chan)
+   if(Settings->getParamMode('X') == MIDIUSB && Settings->isParamEnabled('X'))
+      usbMIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL)); 
+   if(Settings->getParamMode('Y') == MIDIUSB && Settings->isParamEnabled('Y'))
+      usbMIDI.sendControlChange(Settings->getParamSetting('Y', MIDICC), (char)(x>>9), Settings->getParamSetting('Y', MIDICHNL)); 
+   if(Settings->getParamMode('T') == MIDIUSB && Settings->isParamEnabled('T'))
+      usbMIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (char)(x>>9), Settings->getParamSetting('T', MIDICHNL)); 
+
+//UART MIDI OUTPUT
+
 //change adc states
    adc0_state = 0;
    adc1_state = 0;
