@@ -8,6 +8,10 @@
 #define MIDICHNL 0
 #define MIDICC 1
 #define INV 2
+
+#define LINEAR_W_EDGES 0
+#define LINEAR_NO_EDGES 1
+#define LOGARITHMIC 2
 class param {
    private:
       std::map<uint8_t, uint8_t> settings;
