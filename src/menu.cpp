@@ -6,10 +6,6 @@
 #include <map>
 
 //#include <string>
-/* TODO: 
- * ability to DISABLE any control parameters
- * a STATUS menu that lists mode, status (enabled/disabled), and settings for all three parameters
- */
 extern LiquidCrystal lcd; // lcd object is declared and initialized in main.cpp
 unsigned char selected = 1;
 unsigned char xCfg = 9; // menu initially thinks all parameters are in MIDI mode. May want to change later
@@ -21,7 +17,12 @@ const char * modemap[3] = {"MIDI/USB","MIDI/UART","OSC"};
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
 const char menu_002[] = "Calibration";        // 2
-const char menu_003[] = "Status";             // 3
+const char menu_003[] = "Presets";            // 3
+/* presets are stored in EEPROM, yeah, but what are their default states before they are set?
+ * what happens when you load an unused preset? How do we know it's not used in the first place?
+ *
+ *
+ */
 
 const char menu_100[] = "[Config parameter]"; // 4
 const char menu_101[] = "X";                  // 5
@@ -78,6 +79,7 @@ static Bounce back = Bounce();
 static Bounce up = Bounce();
 static Bounce down = Bounce();
 static Bounce enter = Bounce();
+static Bounce save = Bounce();
 
 void debounceInit() {
 
@@ -92,6 +94,9 @@ void debounceInit() {
 
    enter.attach(PIN_ENTER);
    enter.interval(20); 
+
+   save.attach(PIN_SAVE);
+   save.interval(20);
    return;
 }
 
@@ -547,10 +552,12 @@ void toggleOnOff() {
   lcd.print(" OK");
   delay(1000); // give user time to see confirmation of invert parameter setting
 }
-//void showStatus()
-//{
-//
-//}
+
+void savePreset()
+{
+   lcd.clear();
+
+}
 
 MenuEntry menu[] =
 {
@@ -706,23 +713,29 @@ void browseMenu() {
    int keypress = getButtonPress();
 
    if (keypress == BACK) {
-      Serial.println("detected something from back button");
+      Serial.println("BACK pressed");
          selected = menu[selected].back;
    }
    if (keypress == UP) {
-      Serial.println("detected something from up button");
+      Serial.println("UP pressed");
          selected = menu[selected].up;
    }
    if (keypress == DOWN) {
-      Serial.println("detected something from down button");
+      Serial.println("DOWN pressed");
          selected = menu[selected].down;
    }
    if (keypress == ENTER) {
-      Serial.println("detected something from enter button");
+      Serial.println("ENTER pressed");
          if (menu[selected].fp != 0 ) {
             menu[selected].fp(); // fp takes care of drawing menu
          }  // may want to change this in the future
          selected = menu[selected].enter;
+   }
+   if (keypress == SAVE) {
+      Serial.println("SAVE pressed");
+      // if SAVE is pressed, when the user is done saving, they return to whereever
+      // they were before in the menu
+      savePreset();
    }
    if (keypress != -1) { // only redraw menu if keypress is detected
       showMenu();
