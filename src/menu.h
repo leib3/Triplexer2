@@ -10,6 +10,8 @@
 #define UP 1
 #define DOWN 2
 #define BACK 3
+#define SAVE 4
+
 typedef struct MenuStruct
 {  const char * text;
    unsigned char num_menupoints;
