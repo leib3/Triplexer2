@@ -74,3 +74,40 @@ void oscsend4(unsigned short ul, unsigned short ur, unsigned short ll, unsigned 
     SLIPSerial.endPacket(); // mark the end of the OSC Packet
     myBundle.empty(); // empty the bundle to free room for a new one
 };
+
+//Functions for receive OSC, and doing stuff with it
+
+void osc_cc(OSCMessage &msg){
+   int cc;
+   char param;
+   char buffer[16];
+   cc=msg.getInt(0);
+   Serial.print("got cc: ");
+   Serial.println(cc);
+   if(msg.getAddress((char*)buffer, 0)  > 9){
+     Serial.print("for param: ");
+     Serial.println(buffer[9]);
+   }
+}
+
+void oscreceive(){
+   OSCMessage inMessage;
+   int size;
+   while(!SLIPSerial.endofPacket())
+    if( (size =SLIPSerial.available()) > 0)
+    {
+       while(size--)
+          inMessage.fill(SLIPSerial.read());
+     }
+  
+  if(!inMessage.hasError()){
+   inMessage.dispatch("/teensy/xcc", osc_cc);
+   inMessage.dispatch("/teensy/ycc", osc_cc);
+   inMessage.dispatch("/teensy/tcc", osc_cc);
+
+  }
+}
+
+void checkosc(){
+   oscreceive();
+}
