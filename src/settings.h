@@ -20,8 +20,8 @@ class param {
          settings[0] = 1; // MIDI Channel
          settings[1] = 1; // MIDI CC number
          settings[2] = 0; // invert
-         settings[3] = 1; // OSC setting, to be determined
-         settings[4] = 1; // OSC setting, to be determined
+         settings[3] = 0; // response curve, default to linear with edges.
+         // 0: linear w/ edges, 1: linear, 2: logarithmic
       }
       // does no error checking. rely on front-end to do it
       // which is exactly what the LCD menu implementation does right now
