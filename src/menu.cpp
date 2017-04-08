@@ -614,7 +614,7 @@ void savePreset()
    } while (keypress != BACK && keypress != ENTER);
    if (keypress == BACK) return;
    if (choice >= 1 && choice <= 4) {
-      EEPROM.put((choice-1)*sizeof(*Settings),*Settings);
+      EEPROM.put((choice-1)*sizeof(tpxSettings),*Settings);
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("SAVED TO");
@@ -634,7 +634,34 @@ void savePreset()
 void loadPreset()
 {
   lcd.clear();
-  EEPROM.get(0, *Settings);
+  uint8_t choice = 0;
+  if (selected == 9) {
+     choice = 1;
+  }
+  else if (selected == 10) {
+     choice = 2;
+  }
+  else if (selected == 11) {
+     choice = 3;
+  }
+  else if (selected == 12) {
+     choice = 4;
+  }
+  else {
+     lcd.clear();
+     lcd.setCursor(0,0);
+     lcd.print("ERR: invalid");
+     delay(1000);
+     return;
+  }
+  EEPROM.get((choice-1)*sizeof(tpxSettings), *Settings);
+  lcd.setCursor(0,0);
+  lcd.print("Preset ");
+  lcd.print(choice);
+  lcd.setCursor(1,1);
+  lcd.print(" loaded");
+  delay(1000);
+  return;
  // Serial.println("from EEPROM:");
  // Serial.println("PARAM STATUS:");
  // Serial.println(Settings->isParamEnabled('X'));
@@ -653,9 +680,6 @@ void loadPreset()
  // Serial.println("T mode: ");
  // Serial.println(Settings->getParamMode('T'));
 
-  lcd.print("does it work?");
-  delay(1000);
-  return;
 }
 
 MenuEntry menu[] =
@@ -671,10 +695,10 @@ MenuEntry menu[] =
    {menu_103, 4, 6, 7, totCfg, 1, 0},                 // 7
 
    {menu_110, 5, 0, 0, 0, 0, 0},                      // 8 [Load Presets]
-   {menu_111, 5, 9, 10, 9, 1, loadPreset},                     // 9
-   {menu_112, 5, 9, 11, 10, 1, loadPreset},                    // 10
-   {menu_113, 5, 10, 12, 11, 1, loadPreset},                   // 11
-   {menu_114, 5, 11, 12, 12, 1, loadPreset},                   // 12
+   {menu_111, 5, 9, 10, 9, 1, loadPreset},            // 9
+   {menu_112, 5, 9, 11, 10, 1, loadPreset},           // 10
+   {menu_113, 5, 10, 12, 11, 1, loadPreset},          // 11
+   {menu_114, 5, 11, 12, 12, 1, loadPreset},          // 12
                                                   
    {menu_200, 7, 0, 0, 0, 0, 0}, // [Config X]        // 13
    {menu_201, 7, 14, 15, 14, 5, configMIDIChannel},   // 14           
