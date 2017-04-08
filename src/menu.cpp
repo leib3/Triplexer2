@@ -129,9 +129,9 @@ int getButtonPress() {
 // the current value of 'selected'. All other config menu functions
 // use this same logic 
 void configMIDICC() {
-   char param;
-   uint8_t CCnum;
-   int keypress;
+   char param = 'A'; // initialization
+   uint8_t CCnum = 0;
+   int keypress = 0;
    if (selected == (xCfg+1)) {
         param = 'X';
         CCnum = Settings->getParamSetting('X', MIDICC);
@@ -224,9 +224,9 @@ void configMIDICC() {
 }
 
 void configMIDIChannel() {
-  char param;
-  uint8_t CHnum;
-  int keypress;
+  char param = 'A'; // initialization
+  uint8_t CHnum = 0;
+  int keypress = 0;
   if (selected == xCfg) {
     param = 'X';
     CHnum = Settings->getParamSetting('X', MIDICHNL);
@@ -318,9 +318,9 @@ void configMIDIChannel() {
 
 void configINV()
 {
-  uint8_t inv;
-  char param;
-  int keypress;
+  uint8_t inv = 0;
+  char param = 'A';
+  int keypress = 0;
   if (selected == (xCfg+2)) {
        param = 'X';
        inv = Settings->getParamSetting('X', INV);
@@ -396,9 +396,9 @@ void configINV()
 
 void configMode()
 {
-  uint8_t mode;
-  char param;
-  int keypress;
+  uint8_t mode = 0;
+  char param = 'A';
+  int keypress = 0;
   if (selected == xCfg+3 || selected == xCfg+8) {
        param = 'X';
        mode = Settings->getParamMode(param);
@@ -509,9 +509,9 @@ void configMode()
    delay(1000);
 } 
 void toggleOnOff() {
-  char param;
-  bool on;
-  int keypress;
+  char param = 'A'; // initialization
+  bool on = false;
+  int keypress = 0;
   if (selected == xCfg+4 || selected == xCfg+9) {
        param = 'X';
        on = Settings->isParamEnabled(param);
@@ -614,7 +614,7 @@ void savePreset()
    } while (keypress != BACK && keypress != ENTER);
    if (keypress == BACK) return;
    if (choice >= 1 && choice <= 4) {
-      EEPROM.put(0,*Settings);
+      EEPROM.put((choice-1)*sizeof(*Settings),*Settings);
       lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("SAVED TO");
@@ -634,7 +634,6 @@ void savePreset()
 void loadPreset()
 {
   lcd.clear();
-  //tpxSettings * loadedSettings = new tpxSettings;
   EEPROM.get(0, *Settings);
  // Serial.println("from EEPROM:");
  // Serial.println("PARAM STATUS:");
