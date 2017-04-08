@@ -15,6 +15,7 @@ const int channel = 1;
                // RS, E, D4, D5, D6, D7
 LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
 
+//DFRkeypad button defines
 #define btnRIGHT  0
 #define btnUP     1
 #define btnDOWN   2
@@ -29,10 +30,12 @@ void  init() {
    //pinMode(0, INPUT);
    digitalWriteFast(13, HIGH);
    // commented out menu stuff for now. Put back in with Zach whenever we meet
-   pinMode(ENTER, INPUT_PULLUP); // menu buttons
-   pinMode(UP, INPUT_PULLUP);
-   pinMode(DOWN, INPUT_PULLUP);
-   pinMode(BACK, INPUT_PULLUP);
+   pinMode(PIN_ENTER, INPUT_PULLUP); // menu buttons
+   pinMode(PIN_UP, INPUT_PULLUP);
+   pinMode(PIN_DOWN, INPUT_PULLUP);
+   pinMode(PIN_BACK, INPUT_PULLUP);
+   pinMode(PIN_SAVE, INPUT_PULLUP);
+   
    lcd.begin(16,2);
 
    showMenu();

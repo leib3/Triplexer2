@@ -3,7 +3,7 @@
 #include "LiquidCrystal.h"
 #include "DFRkeypad.h"
 #include "Bounce2.h"
-//#include "EEPROM.h"
+#include "EEPROM.h"
 #include <map>
 
 //#include <string>
@@ -39,7 +39,7 @@ const char menu_202[] = "MIDI CC #";          // 15
 const char menu_203[] = "INV X";              // 16
 const char menu_204[] = "MODE";               // 17
 const char menu_209[] = "EN/DISABLE X";       // 18
-const char menu_299[] = "X Response Crv";   // 19
+const char menu_299[] = "X RESPONSE CRV";   // 19
 
 const char menu_205[] = "[Config X OSC]";     // 20
 const char menu_206[] = "OPTION #1";          // 21
@@ -53,7 +53,7 @@ const char menu_212[] = "MIDI CC #";          // 27
 const char menu_213[] = "INV Y";              // 28
 const char menu_214[] = "MODE";               // 29
 const char menu_218[] = "EN/DISABLE Y";       // 30
-const char menu_219[] = "Y Response Crv";   // 31
+const char menu_219[] = "Y RESPONSE CRV";   // 31
 
 const char menu_215[] = "[Config Y OSC]";     // 32
 const char menu_216[] = "OSC OPTION #1";      // 33
@@ -67,21 +67,13 @@ const char menu_222[] = "MIDI CC #";          // 39
 const char menu_223[] = "INV TOT";            // 40
 const char menu_224[] = "MODE";               // 41
 const char menu_228[] = "EN/DISABLE TOT";     // 42
-const char menu_229[] = "T Response Crv";   // 43
+const char menu_229[] = "T RESPONSE CRV";   // 43
 
 const char menu_225[] = "[Config TOT OSC]";   // 44
 const char menu_226[] = "OSC OPTION #1";      // 45
 const char menu_227[] = "MODE";               // 46
                                               // 47
                                               // 48
-//const char menu_997[] = "MIDI/UART";          // 32
-//const char menu_998[] = "MIDI/USB";           // 33
-//const char menu_999[] = "OSC";                // 34
-//const char menu_110[] = "[X enabled]";        // 35
-//const char menu_111[] = "[X disabled]";       // 36
-
-// we can deduce which parameter is being configured based on 
-// the current value of 'selected'. 
 //const char* DFRkeypad::sKEY[]=                          { "---",       "Right",   "Up", "Down", "Left", "Select", "???" };
 //
 static Bounce back = Bounce();
@@ -133,6 +125,9 @@ int getButtonPress() {
    }
    else return -1; // no button press detected
 }
+// we can deduce which parameter is being configured based on 
+// the current value of 'selected'. All other config menu functions
+// use this same logic 
 void configMIDICC() {
    char param;
    uint8_t CCnum;
@@ -199,16 +194,22 @@ void configMIDICC() {
    switch (param) {
       case 'X':
          if (Settings->setParamOption('X', MIDICC, CCnum) != 1) {
+            lcd.clear();
+            lcd.print("Error setting CC!");
             Serial.println("Error setting X CC num");
          }
          break;
       case 'Y':
          if (Settings->setParamOption('Y', MIDICC, CCnum) != 1) {
+            lcd.clear();
+            lcd.print("Error setting CC!");
             Serial.println("Error setting Y CC num");
          }
          break;
       case 'T':
          if (Settings->setParamOption('T', MIDICC, CCnum) != 1) {
+            lcd.clear();
+            lcd.print("Error setting CC!");
             Serial.println("Error setting TOT CC num");
          }
          break;
@@ -576,24 +577,84 @@ void configResponseCurve()
 {
     lcd.clear();
     lcd.print("hello respcurve");
+    delay(1000);
     return;
 }
 
 /* TODO: SAVE DEFAULT INITIAL STATES TO EEPROM FOR EXPO
  * AND LOAD THEM ON STARTUP
 */
+// all the user needs to do at this time is choose a preset to save to EEPROM
 void savePreset()
 {
+   uint8_t choice = 1;
+   int keypress = 0;
+
    lcd.clear();
-   //EEPROM.put(0, *Settings);
-   lcd.print("hello save!");
-   delay(1000);
+   lcd.setCursor(0,0);
+   lcd.print("[SAVE TO EEPROM]");
+   lcd.setCursor(0,1);
+   lcd.print("-#");
+   do {
+      keypress = getButtonPress();     
+      lcd.print(choice);
+      lcd.setCursor(2,1);
+      if (keypress == UP) {
+         if (choice == 4) {
+            choice = 1;
+         }
+         else ++choice;
+      }
+      else if (keypress == DOWN) {
+         if (choice == 1) {
+            choice = 4;
+         }
+         else --choice;
+      }
+   } while (keypress != BACK && keypress != ENTER);
+   if (keypress == BACK) return;
+   if (choice >= 1 && choice <= 4) {
+      EEPROM.put(0,*Settings);
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("SAVED TO");
+      lcd.setCursor(0,1);
+      lcd.print("PRESET ");
+      lcd.print(choice);
+      delay(1000);
+   }
+   else {
+      lcd.clear();
+      lcd.print("ERROR SAVING");
+      delay(1000);
+   }
+   return;
 }
+   
 void loadPreset()
 {
   lcd.clear();
-  //EEPROM.get(0, Settings);
-  lcd.print("hello load!");
+  //tpxSettings * loadedSettings = new tpxSettings;
+  EEPROM.get(0, *Settings);
+ // Serial.println("from EEPROM:");
+ // Serial.println("PARAM STATUS:");
+ // Serial.println(Settings->isParamEnabled('X'));
+ // Serial.println(Settings->isParamEnabled('Y'));
+ // Serial.println(Settings->isParamEnabled('T'));
+ // Serial.println("XMIDICC: ");
+ // Serial.println(Settings->getParamSetting('X', 1));
+ // Serial.println("YMIDICC: ");
+ // Serial.println(Settings->getParamSetting('Y', 1));
+ // Serial.println("TOTMIDICC: ");
+ // Serial.println(Settings->getParamSetting('T', 1));
+ // Serial.println("X mode: ");
+ // Serial.println(Settings->getParamMode('X'));
+ // Serial.println("Y mode: ");
+ // Serial.println(Settings->getParamMode('Y'));
+ // Serial.println("T mode: ");
+ // Serial.println(Settings->getParamMode('T'));
+
+  lcd.print("does it work?");
   delay(1000);
   return;
 }
@@ -611,10 +672,10 @@ MenuEntry menu[] =
    {menu_103, 4, 6, 7, totCfg, 1, 0},                 // 7
 
    {menu_110, 5, 0, 0, 0, 0, 0},                      // 8 [Load Presets]
-   {menu_111, 5, 9, 10, 9, 1, 0},                     // 9
-   {menu_112, 5, 9, 11, 10, 1, 0},                    // 10
-   {menu_113, 5, 10, 12, 11, 1, 0},                   // 11
-   {menu_114, 5, 11, 12, 12, 1, 0},                   // 12
+   {menu_111, 5, 9, 10, 9, 1, loadPreset},                     // 9
+   {menu_112, 5, 9, 11, 10, 1, loadPreset},                    // 10
+   {menu_113, 5, 10, 12, 11, 1, loadPreset},                   // 11
+   {menu_114, 5, 11, 12, 12, 1, loadPreset},                   // 12
                                                   
    {menu_200, 7, 0, 0, 0, 0, 0}, // [Config X]        // 13
    {menu_201, 7, 14, 15, 14, 5, configMIDIChannel},   // 14           
@@ -785,7 +846,8 @@ void browseMenu() {
    }
    if (keypress == SAVE) {
       Serial.println("SAVE pressed");
-      // if SAVE is pressed, when the user is done saving, they return to whereever
+      savePreset();
+      // if SAVE is pressed, when the user is done saving, they return to wherever
       // they were before in the menu
    }
    if (keypress != -1) { // only redraw menu if keypress is detected

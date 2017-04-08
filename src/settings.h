@@ -4,7 +4,7 @@
 #define MIDIUSB 0
 #define MIDIUART 1
 #define OSC 2
-// convenient defines to pass to getParamOption, setParamOption, which take uint8's
+// convenient defines for use with getParamOption, setParamOption, which take uint8's
 #define MIDICHNL 0
 #define MIDICC 1
 #define INV 2
@@ -14,7 +14,7 @@
 #define LOGARITHMIC 2
 class param {
    private:
-      std::map<uint8_t, uint8_t> settings;
+      uint8_t settings[6];
    public:
       bool enabled;
       uint8_t mode;
