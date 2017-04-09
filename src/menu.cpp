@@ -14,6 +14,7 @@ unsigned char yCfg = 26; // these are just initializations
 unsigned char totCfg = 38;
 tpxSettings * Settings = new tpxSettings; // how do I share this instance with the future web front-end?
 const char * modemap[3] = {"MIDI/USB","MIDI/UART","OSC"};
+const char * curvemap[3] = {"LINEAR W EDGES", "LINEAR", "LOGARITHMIC"};
 
 const char menu_000[] = "[Main Menu]";        // 0
 const char menu_001[] = "Config";             // 1
@@ -575,8 +576,75 @@ void toggleOnOff() {
 
 void configResponseCurve()
 {
+   int keypress = 0;
+   char param = 'A'; // initialization
+   uint8_t curve = 0;
+
+   if (selected == xCfg + 5) {
+      param = 'X';
+      curve = Settings->getParamSetting('X', RESPCURVE);
+   }
+   else if (selected == yCfg + 5) {
+      param = 'Y';
+      curve = Settings->getParamSetting('Y', RESPCURVE);
+   }
+   else if (selected == totCfg + 5) {
+      param = 'T';
+      curve = Settings->getParamSetting('T', RESPCURVE);
+   }
+   else {
+      lcd.clear();
+      lcd.print("ERR: INVALID");
+      return;
+   }
+   
     lcd.clear();
-    lcd.print("hello respcurve");
+    lcd.setCursor(0,0);
+    lcd.print("[SET CURVE] ");
+    lcd.print(param);
+    lcd.setCursor(0,1);
+    lcd.print("-");
+    do {
+       keypress = getButtonPress();
+       lcd.setCursor(1,1);
+       lcd.print(curvemap[curve]);
+       if (keypress == UP) {
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("[SET CURVE] ");
+          lcd.print(param);
+          lcd.setCursor(0,1);
+          lcd.print("-");
+          if (curve == LOGARITHMIC) {
+             curve = LINEAR_W_EDGES;
+          }
+          else ++curve;
+       }
+       else if (keypress == DOWN) {
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("[SET CURVE] ");
+          lcd.print(param);
+          lcd.setCursor(0,1);
+          lcd.print("-");
+          if (curve == LINEAR_W_EDGES) {
+             curve = LOGARITHMIC;
+          }
+          else --curve;
+       }
+    } while (keypress != ENTER && keypress != BACK);
+    if (keypress == BACK) return;
+    if (Settings->setParamOption(param, RESPCURVE, curve) != 1) {
+       lcd.clear();
+       lcd.print("ERROR setting");
+       return;
+    }
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(param);
+    lcd.print(" RESP CURVE OK");
+    lcd.setCursor(0,1);
+    lcd.print(curvemap[curve]);
     delay(1000);
     return;
 }
@@ -597,8 +665,8 @@ void savePreset()
    lcd.print("-#");
    do {
       keypress = getButtonPress();     
-      lcd.print(choice);
       lcd.setCursor(2,1);
+      lcd.print(choice);
       if (keypress == UP) {
          if (choice == 4) {
             choice = 1;

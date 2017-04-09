@@ -8,6 +8,7 @@
 #define MIDICHNL 0
 #define MIDICC 1
 #define INV 2
+#define RESPCURVE 3
 
 #define LINEAR_W_EDGES 0
 #define LINEAR_NO_EDGES 1
