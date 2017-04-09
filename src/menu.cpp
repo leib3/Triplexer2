@@ -5,7 +5,9 @@
 #include "Bounce2.h"
 #include "EEPROM.h"
 #include <map>
-
+/* TODO: When switching a param from MIDI to OSC or OSC to MIDI, change the value of selected accordingly
+ * so the menu doesn't return to the MIDI specific config menu if param is in OSC mode, or vice-versa
+ * */
 //#include <string>
 extern LiquidCrystal lcd; // lcd object is declared and initialized in main.cpp
 unsigned char selected = 1;
@@ -37,13 +39,13 @@ const char menu_114[] = "Preset 4";          // 12
 const char menu_200[] = "[Config X]";         // 13
 const char menu_201[] = "MIDI channel";       // 14
 const char menu_202[] = "MIDI CC #";          // 15
-const char menu_203[] = "INV X";              // 16
+const char menu_203[] = "INVERT X";           // 16
 const char menu_204[] = "MODE";               // 17
 const char menu_209[] = "EN/DISABLE X";       // 18
-const char menu_299[] = "X RESPONSE CRV";   // 19
+const char menu_299[] = "X RESPONSE CRV";     // 19
 
 const char menu_205[] = "[Config X OSC]";     // 20
-const char menu_206[] = "OPTION #1";          // 21
+const char menu_206[] = "INVERT X";           // 21
 const char menu_207[] = "MODE";               // 22
                                               // 23
                                               // 24
@@ -51,13 +53,13 @@ const char menu_207[] = "MODE";               // 22
 const char menu_210[] = "[Config Y]";         // 25
 const char menu_211[] = "MIDI channel";       // 26
 const char menu_212[] = "MIDI CC #";          // 27
-const char menu_213[] = "INV Y";              // 28
+const char menu_213[] = "INVERT Y";           // 28
 const char menu_214[] = "MODE";               // 29
 const char menu_218[] = "EN/DISABLE Y";       // 30
-const char menu_219[] = "Y RESPONSE CRV";   // 31
+const char menu_219[] = "Y RESPONSE CRV";     // 31
 
 const char menu_215[] = "[Config Y OSC]";     // 32
-const char menu_216[] = "OSC OPTION #1";      // 33
+const char menu_216[] = "INVERT Y";           // 33
 const char menu_217[] = "MODE";               // 34
                                               // 35
                                               // 36
@@ -65,13 +67,13 @@ const char menu_217[] = "MODE";               // 34
 const char menu_220[] = "[Config TOT]";       // 37
 const char menu_221[] = "MIDI channel";       // 38
 const char menu_222[] = "MIDI CC #";          // 39
-const char menu_223[] = "INV TOT";            // 40
+const char menu_223[] = "INVERT TOT";         // 40
 const char menu_224[] = "MODE";               // 41
 const char menu_228[] = "EN/DISABLE TOT";     // 42
-const char menu_229[] = "T RESPONSE CRV";   // 43
+const char menu_229[] = "T RESPONSE CRV";     // 43
 
 const char menu_225[] = "[Config TOT OSC]";   // 44
-const char menu_226[] = "OSC OPTION #1";      // 45
+const char menu_226[] = "INVERT TOT";         // 45
 const char menu_227[] = "MODE";               // 46
                                               // 47
                                               // 48
@@ -322,15 +324,15 @@ void configINV()
   uint8_t inv = 0;
   char param = 'A';
   int keypress = 0;
-  if (selected == (xCfg+2)) {
+  if (selected == (xCfg+2) || selected == (xCfg+7)) {
        param = 'X';
        inv = Settings->getParamSetting('X', INV);
   }
-  else if (selected == (yCfg+2)) {
+  else if (selected == (yCfg+2) || selected == (yCfg+7)) {
        param = 'Y';
        inv = Settings->getParamSetting('Y', INV);
   }
-  else if (selected == (totCfg+2)) {
+  else if (selected == (totCfg+2) || selected == (totCfg+7)) {
        param = 'T';
        inv = Settings->getParamSetting('T', INV);
   }
@@ -777,7 +779,7 @@ MenuEntry menu[] =
    {menu_299, 7, 18, 19, 19, 5, configResponseCurve}, // 19
 
    {menu_205, 5, 0, 0, 0, 0, 0}, // [Config X OSC]    // 20
-   {menu_206, 5, 21, 22, 21, 5, 0},                   // 21
+   {menu_206, 5, 21, 22, 21, 5, configINV},                   // 21
    {menu_207, 5, 21, 23, 22, 5, configMode},          // 22
    {menu_209, 5, 22, 24, 23, 5, toggleOnOff},         // 23
    {menu_299, 5, 23, 24, 24, 5, configResponseCurve}, // 24
@@ -791,7 +793,7 @@ MenuEntry menu[] =
    {menu_219, 7, 30, 31, 31, 5, configResponseCurve}, // 31
 
    {menu_215, 5, 0, 0, 0, 0, 0}, // [Config Y OSC]    // 32
-   {menu_216, 5, 33, 34, 33, 5, 0},                   // 33
+   {menu_216, 5, 33, 34, 33, 5, configINV},                   // 33
    {menu_217, 5, 33, 35, 34, 5, configMode},          // 34
    {menu_218, 5, 34, 36, 35, 5, toggleOnOff},         // 35
    {menu_219, 5, 35, 36, 36, 5, configResponseCurve}, // 36
@@ -805,7 +807,7 @@ MenuEntry menu[] =
    {menu_229, 7, 42, 43, 43, 5, configResponseCurve}, // 43
 
    {menu_225, 5, 0, 0, 0, 0, 0}, // [Config TOT OSC]  // 44
-   {menu_226, 5, 45, 46, 45, 5, 0},                   // 45
+   {menu_226, 5, 45, 46, 45, 5, configINV},                   // 45
    {menu_227, 5, 45, 47, 46, 5, configMode},          // 46
    {menu_228, 5, 46, 48, 47, 5, toggleOnOff},         // 47
    {menu_229, 5, 47, 48, 48, 5, configResponseCurve}, // 48
