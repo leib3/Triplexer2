@@ -4,7 +4,6 @@
 #include "DFRkeypad.h"
 #include "Bounce2.h"
 #include "EEPROM.h"
-#include <map>
 /* TODO: When switching a param from MIDI to OSC or OSC to MIDI, change the value of selected accordingly
  * so the menu doesn't return to the MIDI specific config menu if param is in OSC mode, or vice-versa
  * */
@@ -478,6 +477,14 @@ void configMode()
             delay(2000);
             return;
          }
+         else {
+            if (mode == OSC) {
+               selected = xCfg + 7;
+            }
+            else {
+               selected = xCfg;
+            }
+         }
          break;
       case 'Y':
          if (Settings->setParamMode('Y', mode) != 1) {
@@ -488,6 +495,14 @@ void configMode()
             lcd.print("Resetting Y");
             delay(2000);
             return;
+         }
+         else {
+            if (mode == OSC) {
+               selected = yCfg + 7;
+            }
+            else {
+               selected = yCfg;
+            }
          }
          break;
       case 'T':
@@ -500,8 +515,17 @@ void configMode()
             delay(2000);
             return;
          }
+         else {
+            if (mode == OSC) {
+               selected = totCfg + 7;
+            }
+            else {
+               selected = totCfg;
+            }
+         }
          break;
    }
+   
    lcd.clear();
    lcd.setCursor(0,0);
    lcd.print(param);
@@ -582,15 +606,15 @@ void configResponseCurve()
    char param = 'A'; // initialization
    uint8_t curve = 0;
 
-   if (selected == xCfg + 5) {
+   if (selected == xCfg + 5 || selected == xCfg + 10) {
       param = 'X';
       curve = Settings->getParamSetting('X', RESPCURVE);
    }
-   else if (selected == yCfg + 5) {
+   else if (selected == yCfg + 5 || selected == yCfg + 10) {
       param = 'Y';
       curve = Settings->getParamSetting('Y', RESPCURVE);
    }
-   else if (selected == totCfg + 5) {
+   else if (selected == totCfg + 5 || selected == totCfg + 10) {
       param = 'T';
       curve = Settings->getParamSetting('T', RESPCURVE);
    }
