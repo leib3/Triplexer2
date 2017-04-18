@@ -63,7 +63,7 @@ extern "C" int main()
          Serial.println(usbMIDI.getChannel());
       } 
       */
-   //delayMicroseconds(1000000);
+   checkosc();
    } 
 }
 

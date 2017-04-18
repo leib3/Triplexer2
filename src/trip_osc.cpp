@@ -4,10 +4,14 @@
 #include "SLIPEncodedUSBSerial.h"
 #include "SLIPEncodedSerial.h"
 #include "WProgram.h"
+#include "settings.h"
 
-/*
-Make an OSC message and send it over serial
- */
+
+#define OSCPARAMINDEX 8
+#define OSCMAXADDR 16
+
+//this is the current system settings object
+extern tpxSettings * Settings;
 
 
 //SLIPEncodedUSBSerial SLIPSerial;
@@ -36,9 +40,9 @@ void oscinit() {
 }
 
 
-void oscsend1(unsigned short value){
+void oscsend1(char * target, int value){
   //the message wants an OSC address as first argument
-  OSCMessage msg("/teensy/helloworld");
+  OSCMessage msg(target);
   msg.add(value);
   SLIPSerial.beginPacket();  
     msg.send(SLIPSerial); // send the bytes to the SLIP stream
@@ -77,16 +81,142 @@ void oscsend4(unsigned short ul, unsigned short ur, unsigned short ll, unsigned 
 
 //Functions for receive OSC, and doing stuff with it
 
+//TODO once program change is implemented, add the function to do that here
+void osc_pgm(OSCMessage &msg){
+   int pgm;
+   pgm=msg.getInt(0);
+   Serial.print("got pgm: ");
+   Serial.println(pgm);
+}
+
+
+void strcopy(char * dest, char * source, int n){
+   int i = 0;
+  while(i<n-1 && source[i]){
+   dest[i]=source[i];
+   i++;
+   }
+   dest[i] = 0;
+}
+
+//TODO implement send
+void osc_send(OSCMessage &msg){
+   uint8_t setting_ret;
+   char parambuf[2];
+   char param, paramCAPS;
+   char target[OSCMAXADDR];
+   msg.getString(0, (char*)parambuf, 2);
+   //Serial.print("got send: ");
+   //Serial.println(parambuf[0]);
+   param = parambuf[0];
+   paramCAPS=param+('A'-'a');
+   //send cc, ch, inv, mode, en
+   setting_ret=Settings->getParamSetting(paramCAPS, MIDICC);
+   strcopy(target, "/teensy/pcc", OSCMAXADDR);
+   target[OSCPARAMINDEX] = param;
+   oscsend1((char *)target, setting_ret);
+   //ch
+   setting_ret=Settings->getParamSetting(paramCAPS, MIDICHNL);
+   strcopy(target, "/teensy/pch", OSCMAXADDR);
+   target[OSCPARAMINDEX] = param;
+   oscsend1((char *)target, setting_ret);
+   //inv
+   setting_ret=Settings->getParamSetting(paramCAPS, INV);
+   strcopy(target, "/teensy/pinv", OSCMAXADDR);
+   target[OSCPARAMINDEX] = param;
+   oscsend1((char *)target, setting_ret);
+   //mode
+   setting_ret=Settings->getParamMode(paramCAPS);
+   strcopy(target, "/teensy/pmode", OSCMAXADDR);
+   target[OSCPARAMINDEX] = param;
+   oscsend1((char *)target, setting_ret);
+   //enable
+   setting_ret=(uint8_t)Settings->isParamEnabled(paramCAPS);
+   strcopy(target, "/teensy/pen", OSCMAXADDR);
+   target[OSCPARAMINDEX] = param;
+   oscsend1((char *)target, setting_ret);
+}
+
 void osc_cc(OSCMessage &msg){
    int cc;
    char param;
-   char buffer[16];
+   char buffer[OSCMAXADDR];
    cc=msg.getInt(0);
    Serial.print("got cc: ");
    Serial.println(cc);
-   if(msg.getAddress((char*)buffer, 0)  > 9){
-     Serial.print("for param: ");
-     Serial.println(buffer[9]);
+   if(msg.getAddress((char*)buffer, 0)  >= 9){
+     param = buffer[OSCPARAMINDEX];
+   }
+   param+=('A'-'a');
+   Serial.print("param = ");
+   Serial.println(param);
+   Settings->setParamOption(param, MIDICC, cc);
+}
+
+void osc_ch(OSCMessage &msg){
+   int ch;
+   char param;
+   char buffer[OSCMAXADDR];
+   ch=msg.getInt(0);
+   Serial.print("got ch: ");
+   Serial.println(ch);
+   if(msg.getAddress((char*)buffer, 0)  >= 9){
+     param = buffer[OSCPARAMINDEX];
+   }
+   param+=('A'-'a');
+   Settings->setParamOption(param, MIDICHNL, ch);
+}
+
+void osc_inv(OSCMessage &msg){
+   int inv;
+   char param;
+   char buffer[OSCMAXADDR];
+   inv=msg.getInt(0);
+   Serial.print("got inv: ");
+   Serial.println(inv);
+   if(msg.getAddress((char*)buffer, 0)  >= 9){
+     param = buffer[OSCPARAMINDEX];
+   } else return;
+   param+=('A'-'a');
+   Settings->setParamOption(param, INV, inv);
+}
+
+void osc_mode(OSCMessage &msg){
+   int mode;
+   char param;
+   char buffer[OSCMAXADDR];
+   mode=msg.getInt(0);
+   Serial.print("got mode: ");
+   Serial.println(mode);
+   if(msg.getAddress((char*)buffer, 0)  >= 9){
+     param = buffer[OSCPARAMINDEX];
+   } else 
+     return;
+   param+=('A'-'a');
+   Settings->setParamMode(param, mode);  //mode 0 = usb midi, mode 1 = midi, mode 2 = OSC
+}
+
+void osc_en(OSCMessage &msg){
+   int en;
+   char param;
+   char buffer[OSCMAXADDR];
+   en=msg.getInt(0);
+   Serial.print("got en: ");
+   Serial.println(en);
+   if(msg.getAddress((char*)buffer, 0)  >= 9){
+     param = buffer[OSCPARAMINDEX];
+   } else return;
+   param+=('A'-'a');
+   Settings->enOrDisableParam(param, (bool)en);
+}
+
+
+void osc_save(OSCMessage &msg){
+   bool save;
+   save=(bool)msg.getInt(0);
+   if(save){
+      //call EEPROM thing from here
+     ;
    }
 }
 
@@ -96,15 +226,49 @@ void oscreceive(){
    while(!SLIPSerial.endofPacket())
     if( (size =SLIPSerial.available()) > 0)
     {
+       //Serial.println("got some osc");
        while(size--)
           inMessage.fill(SLIPSerial.read());
-     }
-  
-  if(!inMessage.hasError()){
-   inMessage.dispatch("/teensy/xcc", osc_cc);
-   inMessage.dispatch("/teensy/ycc", osc_cc);
-   inMessage.dispatch("/teensy/tcc", osc_cc);
-
+    }
+  if(!inMessage.hasError()) {
+   if(inMessage.dispatch("/teensy/pgm", osc_pgm))
+      return;
+   else if(inMessage.dispatch("/teensy/send", osc_send))
+      return;
+   else if(inMessage.dispatch("/teensy/xcc", osc_cc))
+      return;
+   else if(inMessage.dispatch("/teensy/ycc", osc_cc))
+      return;
+   else if(inMessage.dispatch("/teensy/tcc", osc_cc))
+      return;
+   else if(inMessage.dispatch("/teensy/xch", osc_ch))
+       return;   
+   else if(inMessage.dispatch("/teensy/ych", osc_ch))
+      return;
+   else if(inMessage.dispatch("/teensy/tch", osc_ch))
+      return;
+   else if(inMessage.dispatch("/teensy/xinv", osc_inv))
+      return;
+   else if(inMessage.dispatch("/teensy/yinv", osc_inv))
+      return;
+   else if(inMessage.dispatch("/teensy/tinv", osc_inv))
+      return;
+   else if(inMessage.dispatch("/teensy/xmode", osc_mode))
+      return;
+   else if(inMessage.dispatch("/teensy/ymode", osc_mode))
+      return;
+   else if(inMessage.dispatch("/teensy/tmode", osc_mode))
+      return;
+   else if(inMessage.dispatch("/teensy/xen", osc_en))
+      return;
+   else if(inMessage.dispatch("/teensy/yen", osc_en))
+      return;
+   else if(inMessage.dispatch("/teensy/ten", osc_en))
+      return;
+   else if(inMessage.dispatch("/teensy/save", osc_save))
+      return;
+   else 
+      Serial.println("got an unkown OSC input");
   }
 }
 

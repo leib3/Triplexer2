@@ -4,7 +4,7 @@
 //adc macros
 #define NUMAVG    1   //amount of hardware averaging
 #define ADCBITS   16  //bit depth of samples from adc
-#define SAMPLERATE 1000  //in Hz. Currently set slow for debugging.
+#define SAMPLERATE 1000  //in Hz.
 #define BUFSZ 16
 #define BUFSZBITS  4
 

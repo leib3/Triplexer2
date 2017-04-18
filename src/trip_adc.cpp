@@ -4,16 +4,25 @@
 #include "settings.h"
 #include "MIDI.h"
 
-#define MIDICLOCKDIV 50   //UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
+#define MIDICLOCKDIV 		50   	//UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
+#define TINDEXTHRESH   		4000  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
+#define SAVEBUFCLOCKDIV  	100   
+#define SAVEBUFSZ		5	//number of values saved by buffer for when user removes foot. 
 
 //this is the current system settings object
 extern tpxSettings * Settings;
+
 
 //adc pin defs
 const int readPinUL = A0; // uses ADC0
 const int readPinUR = A1; // uses ADC0
 const int readPinLL = A2; // uses ADC1
 const int readPinLR = A3; // uses ADC1
+
+struct savebuf{
+   int x; 
+   int y;
+};
 
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
@@ -51,7 +60,7 @@ void linear_w_edges_response_curve_init(){
    for(i = 256 - n; i<257; i++)
        linear_w_edges_response_curve[i] = 0xffff; 
 }
-
+/*
 void log_response_curve_init(){
    double multiplier = 0.0;
    double previous = 1.0;
@@ -63,6 +72,25 @@ void log_response_curve_init(){
       log_response_curve[i] = (unsigned short)previous;
    }
    log_response_curve[256] = (unsigned short)0xffff;
+}
+*/ 
+
+//adding edges for log response curve
+void log_response_curve_init(){
+   double multiplier = 0.0;
+   double previous = 1.0;
+   int i;
+   int n = 20; 
+   multiplier = pow((double)(1<<16), 1.0/(256.0-(double)(2*n)));
+   for(i = 0; i<n; i++)
+      log_response_curve[i] = 0;
+   log_response_curve[n] = 1;
+   for(i = n+1; i<256-n; i++){
+      previous =  previous*multiplier;
+      log_response_curve[i] = (unsigned short)previous;
+   }
+   for(i=256-n; i<257; i++)
+      log_response_curve[i] = (unsigned short)0xffff;
 }
 
 
@@ -135,18 +163,15 @@ void timerinit(){
    sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
    x_response_curve = linear_w_edges_response_curve;
    y_response_curve = linear_w_edges_response_curve;
-   t_response_curve = log_response_curve;
+   t_response_curve = linear_w_edges_response_curve;
 //dummy settings for testing without Zach
 //delete all of this later
    Settings->setParamOption('X', INV, 0);
    Settings->setParamOption('Y', INV, 0);
    Settings->setParamOption('T', INV, 0);
-   Settings->setParamOption('X', MIDICC, 1);
-   Settings->setParamOption('Y', MIDICC, 2);
-   Settings->setParamOption('T', MIDICC, 3);
-   Settings->setParamMode('X', MIDIUSB);
-   Settings->setParamMode('Y', MIDIUSB);
-   Settings->setParamMode('T', MIDIUSB);
+   Settings->setParamMode('X', OSC);
+   Settings->setParamMode('Y', OSC);
+   Settings->setParamMode('T', OSC);
    Settings->enOrDisableParam('X', 1);
    Settings->enOrDisableParam('Y', 1);
    Settings->enOrDisableParam('T', 1);
@@ -245,7 +270,10 @@ void sampleTimer_isr(){
    static unsigned int x_index_buf[BUFSZ] = {0};
    static unsigned int y_index_buf[BUFSZ] = {0};
    static unsigned int t_index_buf[BUFSZ] = {0};
-   bool oscSendEnable = 0;
+   static struct savebuf savebuf[SAVEBUFSZ]={ {0,0}, {0,0}, {0,0}, {0,0}, {0,0} };
+   static int save_buf_i=0;
+   static int save_buf_clock_div = 0;
+   bool oscSendEnable;
    //TODO this should change to check output format for each of x, y, t- OSC, MIDI, MIDIUSB, and INVERT
    //and call appropriate output functions
    unsigned int x, y, t, //final output values
@@ -280,6 +308,23 @@ void sampleTimer_isr(){
    if(new_t_index >= 1<<16){
       new_t_index = 0xffff; 
    }
+   //do save buf stuff here. replace new indices with indices from about a second ago, if new t_index is below TINDEXTHRESH
+   //while TINDEXTHRESH stays below threshold, don't move the index into the buffer, so the same values are used.
+   
+   //check for new_t_index below threshold. if it is, handle it by replacing new values with buffered ones
+   if(new_t_index < TINDEXTHRESH){
+      new_x_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].x;
+      new_y_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].y;
+   } 
+   // else update save buffer (with proper clock division)
+   else {
+      save_buf_clock_div = (++save_buf_clock_div) % SAVEBUFCLOCKDIV;
+      if( save_buf_clock_div == 0){
+        save_buf_i= (save_buf_i+1)%SAVEBUFSZ;
+        savebuf[save_buf_i].x = new_x_index;
+        savebuf[save_buf_i].y = new_y_index;
+      }
+   }
    //calculate average index and offset using buffer
    old_x_index = x_index_buf[current_buffer_i];
    old_y_index = y_index_buf[current_buffer_i];
@@ -311,6 +356,7 @@ void sampleTimer_isr(){
       t = 0xffff - t;
 
 //OUTPUT SECTION
+   oscSendEnable = 0;
    midiClockDivider = ++midiClockDivider % MIDICLOCKDIV;
    if(Settings->isParamEnabled('X')){
       switch(Settings->getParamMode('X')){
