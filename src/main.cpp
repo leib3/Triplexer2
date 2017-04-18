@@ -13,7 +13,7 @@ const int channel = 1;
 
 //display macros
                // RS, E, D4, D5, D6, D7
-LiquidCrystal lcd(29, 31, 19, 17, 14, 33);
+LiquidCrystal lcd(18, 19, 20, 21, 22, 23);
 
 //DFRkeypad button defines
 #define btnRIGHT  0
@@ -29,7 +29,6 @@ void  init() {
    pinMode(13, OUTPUT);
    //pinMode(0, INPUT);
    digitalWriteFast(13, HIGH);
-   // commented out menu stuff for now. Put back in with Zach whenever we meet
    pinMode(PIN_ENTER, INPUT_PULLUP); // menu buttons
    pinMode(PIN_UP, INPUT_PULLUP);
    pinMode(PIN_DOWN, INPUT_PULLUP);
@@ -51,14 +50,7 @@ extern "C" int main()
   // timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
   // adcCalibrate();
    while (1) {
-      browseMenu();
-      /*if (usbMIDI.read() != 0) {
-         Serial.print("Rcvd type ");
-         Serial.println(usbMIDI.getType());
-         Serial.print("MIDI channel ");
-         Serial.println(usbMIDI.getChannel());
-      } 
-      */
+   browseMenu();
    checkosc();
    } 
 }

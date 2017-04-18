@@ -1,10 +1,10 @@
 #include "stdint.h"
 
-#define PIN_ENTER 0 // digital pins for menu
-#define PIN_UP 22
-#define PIN_DOWN 1
-#define PIN_BACK 3
-#define PIN_SAVE 7 // may need to change
+#define PIN_ENTER 2 // digital pins for menu
+#define PIN_UP 3
+#define PIN_DOWN 4
+#define PIN_BACK 5
+#define PIN_SAVE 6 // may need to change
 
 #define ENTER 0
 #define UP 1
