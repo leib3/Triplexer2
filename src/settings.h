@@ -4,13 +4,18 @@
 #define MIDIUSB 0
 #define MIDIUART 1
 #define OSC 2
-// convenient defines to pass to getParamOption, setParamOption, which take uint8's
+// convenient defines for use with getParamOption, setParamOption, which take uint8's
 #define MIDICHNL 0
 #define MIDICC 1
 #define INV 2
+#define RESPCURVE 3
+
+#define LINEAR_W_EDGES 0
+#define LINEAR_NO_EDGES 1
+#define LOGARITHMIC 2
 class param {
    private:
-      std::map<uint8_t, uint8_t> settings;
+      uint8_t settings[6];
    public:
       bool enabled;
       uint8_t mode;
@@ -20,8 +25,8 @@ class param {
          settings[0] = 1; // MIDI Channel
          settings[1] = 1; // MIDI CC number
          settings[2] = 0; // invert
-         settings[3] = 1; // OSC setting, to be determined
-         settings[4] = 1; // OSC setting, to be determined
+         settings[3] = 0; // response curve, default to linear with edges.
+         // 0: linear w/ edges, 1: linear, 2: logarithmic
       }
       // does no error checking. rely on front-end to do it
       // which is exactly what the LCD menu implementation does right now
