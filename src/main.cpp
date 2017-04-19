@@ -5,6 +5,7 @@
 #include "LiquidCrystal.h"
 #include "trip_osc.h"
 #include "trip_adc.h"
+#include "MIDI.h"
 
 
 
@@ -34,7 +35,7 @@ void  init() {
    pinMode(PIN_DOWN, INPUT_PULLUP);
    pinMode(PIN_BACK, INPUT_PULLUP);
    pinMode(PIN_SAVE, INPUT_PULLUP);
-   
+   MIDI.begin(1);
    lcd.begin(16,2);
 
    showMenu();
@@ -50,6 +51,8 @@ extern "C" int main()
   adcCalibrate();
    while (1) {
    browseMenu();
+   MIDI.sendControlChange((byte)92, (byte)127, (byte)1);
+   delayMicroseconds(1000000);
    //checkosc(); //this function only works inside a while loop
    } 
 }

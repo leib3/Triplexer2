@@ -422,12 +422,12 @@ void sampleTimer_isr(){
             usbMIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (char)(t>>9), Settings->getParamSetting('T', MIDICHNL)); 
             break;
          case MIDIUART:
-            if(!(midiClockDivider)){      //2*MIDICLOCKDIV/3
+            if(!((midiClockDivider+2*MIDICLOCKDIV/3)%MIDICLOCKDIV) ){      //
                Serial.println("sending MIDI UART for t");
                Serial.println(Settings->getParamSetting('T', MIDICC));
                Serial.println(Settings->getParamSetting('T', MIDICHNL));
                Serial.println( (int)(char)(t>>9));
-               MIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (byte) (0xff&(t>>9)), Settings->getParamSetting('T', MIDICHNL));
+               MIDI.sendControlChange((byte)Settings->getParamSetting('T', MIDICC), (byte) (0xff&(t>>9)), (byte)Settings->getParamSetting('T', MIDICHNL));
                }
             break;
          default: 
