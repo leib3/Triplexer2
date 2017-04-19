@@ -4,7 +4,7 @@
 #include "settings.h"
 #include "MIDI.h"
 
-#define MIDICLOCKDIV 		2000   	//UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
+#define MIDICLOCKDIV 		100   	//UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
 #define TINDEXTHRESH   		4000  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
 #define SAVEBUFCLOCKDIV  	100   
 #define SAVEBUFSZ		5	//number of values saved by buffer for when user removes foot. 
@@ -169,8 +169,8 @@ void timerinit(){
    Settings->setParamOption('X', INV, 0);
    Settings->setParamOption('Y', INV, 0);
    Settings->setParamOption('T', INV, 0);
-   Settings->setParamOption('X', MIDICC, 1);
-   Settings->setParamOption('Y', MIDICC, 2);
+   Settings->setParamOption('X', MIDICC, 86);
+   Settings->setParamOption('Y', MIDICC, 85);
    Settings->setParamOption('T', MIDICC, 92);
    Settings->setParamOption('X', MIDICHNL, 1);
    Settings->setParamOption('Y', MIDICHNL, 1);
@@ -387,8 +387,8 @@ void sampleTimer_isr(){
                usbMIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL)); 
             break;
          case MIDIUART:
-            if(!(midiClockDivider+MIDICLOCKDIV/3)){
-               MIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL));
+            if(!((midiClockDivider+MIDICLOCKDIV/3)%MIDICLOCKDIV)){
+               MIDI.sendControlChange((byte)Settings->getParamSetting('X', MIDICC), (byte) (0xff&(x>>9)), (byte)Settings->getParamSetting('X', MIDICHNL));
             }
             break;
          default: 
@@ -406,7 +406,7 @@ void sampleTimer_isr(){
             break;
          case MIDIUART:
             if(!(midiClockDivider))
-               MIDI.sendControlChange(Settings->getParamSetting('Y', MIDICC), (char)(y>>9), Settings->getParamSetting('Y', MIDICHNL));
+               MIDI.sendControlChange((byte)Settings->getParamSetting('Y', MIDICC), (byte) (0xff&(y>>9)), (byte)Settings->getParamSetting('Y', MIDICHNL));
             break;
          default: 
             break;
@@ -423,10 +423,6 @@ void sampleTimer_isr(){
             break;
          case MIDIUART:
             if(!((midiClockDivider+2*MIDICLOCKDIV/3)%MIDICLOCKDIV) ){      //
-               Serial.println("sending MIDI UART for t");
-               Serial.println(Settings->getParamSetting('T', MIDICC));
-               Serial.println(Settings->getParamSetting('T', MIDICHNL));
-               Serial.println( (int)(char)(t>>9));
                MIDI.sendControlChange((byte)Settings->getParamSetting('T', MIDICC), (byte) (0xff&(t>>9)), (byte)Settings->getParamSetting('T', MIDICHNL));
                }
             break;

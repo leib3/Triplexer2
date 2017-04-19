@@ -51,8 +51,6 @@ extern "C" int main()
   adcCalibrate();
    while (1) {
    browseMenu();
-   MIDI.sendControlChange((byte)92, (byte)127, (byte)1);
-   delayMicroseconds(1000000);
    //checkosc(); //this function only works inside a while loop
    } 
 }
