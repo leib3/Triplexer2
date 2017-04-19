@@ -27,7 +27,7 @@ struct savebuf{
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
-unsigned int ul_sens = 100; unsigned int ur_sens = 255; unsigned int ll_sens=100; unsigned int lr_sens = 245; //sensitivy values for each sensor, 0 to 255
+unsigned int ul_sens = 105; unsigned int ur_sens = 255; unsigned int ll_sens=241; unsigned int lr_sens = 213; //sensitivy values for each sensor, 0 to 255
 static int max_total; // max total weight
 volatile int adc0_state, adc1_state;   //state used in adc isr's
 
@@ -169,14 +169,33 @@ void timerinit(){
    Settings->setParamOption('X', INV, 0);
    Settings->setParamOption('Y', INV, 0);
    Settings->setParamOption('T', INV, 0);
-   Settings->setParamMode('X', OSC);
-   Settings->setParamMode('Y', OSC);
-   Settings->setParamMode('T', OSC);
+   Settings->setParamOption('X', MIDICC, 1);
+   Settings->setParamOption('Y', MIDICC, 2);
+   Settings->setParamOption('T', MIDICC, 3);
+   Settings->setParamOption('X', MIDICHNL, 1);
+   Settings->setParamOption('Y', MIDICHNL, 1);
+   Settings->setParamOption('T', MIDICHNL, 1);
+   Settings->setParamMode('X', MIDIUART);
+   Settings->setParamMode('Y', MIDIUART);
+   Settings->setParamMode('T', MIDIUART);
    Settings->enOrDisableParam('X', 1);
    Settings->enOrDisableParam('Y', 1);
    Settings->enOrDisableParam('T', 1);
    
 //stop deleting here!
+}
+
+void disableInterrupts(){
+   sampleTimer.end();
+   myAdc.disableInterrupts(ADC_0);
+   myAdc.disableInterrupts(ADC_1);
+}
+
+void enableInterrupts(){
+   myAdc.enableInterrupts(ADC_0);
+   myAdc.enableInterrupts(ADC_1);
+   sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
+   sampleTimer.priority(20);
 }
 
 //called by adcCalibrate

@@ -4,6 +4,7 @@
 #include "DFRkeypad.h"
 #include "Bounce2.h"
 #include "EEPROM.h"
+#include "trip_adc.h"
 /* TODO: When switching a param from MIDI to OSC or OSC to MIDI, change the value of selected accordingly
  * so the menu doesn't return to the MIDI specific config menu if param is in OSC mode, or vice-versa
  * */
@@ -87,19 +88,19 @@ static Bounce save = Bounce();
 void debounceInit() {
 
    back.attach(PIN_BACK);
-   back.interval(20);
+   back.interval(50);
 
    up.attach(PIN_UP);
-   up.interval(20);
+   up.interval(50);
 
    down.attach(PIN_DOWN);
-   down.interval(20);
+   down.interval(50);
 
    enter.attach(PIN_ENTER);
-   enter.interval(20); 
+   enter.interval(50); 
 
    save.attach(PIN_SAVE);
-   save.interval(20);
+   save.interval(50);
    return;
 }
 
@@ -943,32 +944,34 @@ void browseMenu() {
    int keypress = getButtonPress();
 
    if (keypress == BACK) {
-      Serial.println("BACK pressed");
+      //Serial.println("BACK pressed");
       selected = menu[selected].back;
    }
    if (keypress == UP) {
-      Serial.println("UP pressed");
+      //Serial.println("UP pressed");
       selected = menu[selected].up;
    }
    if (keypress == DOWN) {
-      Serial.println("DOWN pressed");
+      //Serial.println("DOWN pressed");
       selected = menu[selected].down;
    }
    if (keypress == ENTER) {
-      Serial.println("ENTER pressed");
+      //Serial.println("ENTER pressed");
       if (menu[selected].fp != 0 ) {
          menu[selected].fp(); // fp takes care of drawing menu
       }  // may want to change this in the future
       selected = menu[selected].enter;
    }
    if (keypress == SAVE) {
-      Serial.println("SAVE pressed");
+      //Serial.println("SAVE pressed");
       savePreset();
       // if SAVE is pressed, when the user is done saving, they return to wherever
       // they were before in the menu
    }
    if (keypress != -1) { // only redraw menu if keypress is detected
+      //disableInterrupts();
       showMenu();
+      //enableInterrupts();
    }
 }
 

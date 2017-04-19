@@ -5,6 +5,8 @@
 #include "SLIPEncodedSerial.h"
 #include "WProgram.h"
 #include "settings.h"
+#include "menu.h"
+#include "trip_adc.h"
 
 
 #define OSCPARAMINDEX 8
@@ -14,12 +16,9 @@
 extern tpxSettings * Settings;
 
 
-//SLIPEncodedUSBSerial SLIPSerial;
 
-SLIPEncodedUSBSerial SLIPSerial( Serial ); //global SLIP thing
-//SLIPEncodedUSBSerial( thisBoardsSerialUSB );
+SLIPEncodedUSBSerial SLIPSerial( Serial ); //global SLIP object
 
-// SlipEncodedUSBSerial test;
 
 static OSCBundle globalBundle;
 
@@ -85,8 +84,8 @@ void oscsend4(unsigned short ul, unsigned short ur, unsigned short ll, unsigned 
 void osc_pgm(OSCMessage &msg){
    int pgm;
    pgm=msg.getInt(0);
-   Serial.print("got pgm: ");
-   Serial.println(pgm);
+   //Serial.print("got pgm: ");
+   //Serial.println(pgm);
 }
 
 
@@ -95,6 +94,7 @@ void strcopy(char * dest, char * source, int n){
   while(i<n-1 && source[i]){
    dest[i]=source[i];
    i++;
+   //Serial.println("copying a string\r");
    }
    dest[i] = 0;
 }
@@ -142,14 +142,14 @@ void osc_cc(OSCMessage &msg){
    char param;
    char buffer[OSCMAXADDR];
    cc=msg.getInt(0);
-   Serial.print("got cc: ");
-   Serial.println(cc);
+   //Serial.print("got cc: ");
+   //Serial.println(cc);
    if(msg.getAddress((char*)buffer, 0)  >= 9){
      param = buffer[OSCPARAMINDEX];
    }
    param+=('A'-'a');
-   Serial.print("param = ");
-   Serial.println(param);
+   //Serial.print("param = ");
+   //Serial.println(param);
    Settings->setParamOption(param, MIDICC, cc);
 }
 
@@ -158,8 +158,8 @@ void osc_ch(OSCMessage &msg){
    char param;
    char buffer[OSCMAXADDR];
    ch=msg.getInt(0);
-   Serial.print("got ch: ");
-   Serial.println(ch);
+   //Serial.print("got ch: ");
+   //Serial.println(ch);
    if(msg.getAddress((char*)buffer, 0)  >= 9){
      param = buffer[OSCPARAMINDEX];
    }
@@ -172,8 +172,8 @@ void osc_inv(OSCMessage &msg){
    char param;
    char buffer[OSCMAXADDR];
    inv=msg.getInt(0);
-   Serial.print("got inv: ");
-   Serial.println(inv);
+   //Serial.print("got inv: ");
+   //Serial.println(inv);
    if(msg.getAddress((char*)buffer, 0)  >= 9){
      param = buffer[OSCPARAMINDEX];
    } else return;
@@ -186,8 +186,8 @@ void osc_mode(OSCMessage &msg){
    char param;
    char buffer[OSCMAXADDR];
    mode=msg.getInt(0);
-   Serial.print("got mode: ");
-   Serial.println(mode);
+   //Serial.print("got mode: ");
+   //Serial.println(mode);
    if(msg.getAddress((char*)buffer, 0)  >= 9){
      param = buffer[OSCPARAMINDEX];
    } else 
@@ -201,8 +201,8 @@ void osc_en(OSCMessage &msg){
    char param;
    char buffer[OSCMAXADDR];
    en=msg.getInt(0);
-   Serial.print("got en: ");
-   Serial.println(en);
+   //Serial.print("got en: ");
+   //Serial.println(en);
    if(msg.getAddress((char*)buffer, 0)  >= 9){
      param = buffer[OSCPARAMINDEX];
    } else return;
@@ -215,60 +215,126 @@ void osc_save(OSCMessage &msg){
    bool save;
    save=(bool)msg.getInt(0);
    if(save){
-      //call EEPROM thing from here
-     ;
+      savePreset();//TODO this function will require user to use the buttons to choose where to save it. Could change that.
    }
 }
 
 void oscreceive(){
-   OSCMessage inMessage;
+   static OSCMessage inMessage;
    int size;
-   while(!SLIPSerial.endofPacket())
-    if( (size =SLIPSerial.available()) > 0)
-    {
-       //Serial.println("got some osc");
-       while(size--)
+   disableInterrupts();
+   if(!SLIPSerial.endofPacket()){  	//replaced this while loop with an if. This block will run repeatedly from main, 
+ 					//and now it won't block while waiting for the rest of an OSC packet
+      if( (size = SLIPSerial.available() ) > 0)
+      {
+        while(size--){
           inMessage.fill(SLIPSerial.read());
-    }
-  if(!inMessage.hasError()) {
-   if(inMessage.dispatch("/teensy/pgm", osc_pgm))
+        }
+      }
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/send", osc_send))
+  }
+  else if(inMessage.hasError()){
+  inMessage.empty();
+  enableInterrupts();
+  return;
+  }
+  else 
+  {
+   if(inMessage.dispatch("/teensy/pgm", osc_pgm)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/xcc", osc_cc))
+      }
+   else if(inMessage.dispatch("/teensy/send", osc_send)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/ycc", osc_cc))
+      }
+   else if(inMessage.dispatch("/teensy/xcc", osc_cc)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/tcc", osc_cc))
+      }
+   else if(inMessage.dispatch("/teensy/ycc", osc_cc)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/xch", osc_ch))
-       return;   
-   else if(inMessage.dispatch("/teensy/ych", osc_ch))
+      }
+   else if(inMessage.dispatch("/teensy/tcc", osc_cc)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/tch", osc_ch))
+      }
+   else if(inMessage.dispatch("/teensy/xch", osc_ch)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/xinv", osc_inv))
+      }
+   else if(inMessage.dispatch("/teensy/ych", osc_ch)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/yinv", osc_inv))
+      }
+   else if(inMessage.dispatch("/teensy/tch", osc_ch)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/tinv", osc_inv))
+      }
+   else if(inMessage.dispatch("/teensy/xinv", osc_inv)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/xmode", osc_mode))
+      }
+   else if(inMessage.dispatch("/teensy/yinv", osc_inv)){ 
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/ymode", osc_mode))
+      }
+   else if(inMessage.dispatch("/teensy/tinv", osc_inv)){
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/tmode", osc_mode))
+      }
+   else if(inMessage.dispatch("/teensy/xmode", osc_mode)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/xen", osc_en))
+      }
+   else if(inMessage.dispatch("/teensy/ymode", osc_mode)){ 
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/yen", osc_en))
+      }
+   else if(inMessage.dispatch("/teensy/tmode", osc_mode)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/ten", osc_en))
+      }
+   else if(inMessage.dispatch("/teensy/xen", osc_en)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else if(inMessage.dispatch("/teensy/save", osc_save))
+      }
+   else if(inMessage.dispatch("/teensy/yen", osc_en)){
+      inMessage.empty();
+      enableInterrupts();
       return;
-   else 
-      Serial.println("got an unkown OSC input");
+      }
+   else if(inMessage.dispatch("/teensy/ten", osc_en)){
+      inMessage.empty();
+      enableInterrupts();
+      return;
+      }
+   else if(inMessage.dispatch("/teensy/save", osc_save)){
+      inMessage.empty();
+      enableInterrupts();
+      return;
+      }
+   else{
+      inMessage.empty();
+      //Serial.println("got an unkown OSC input");
+      enableInterrupts();
+      }
   }
 }
 

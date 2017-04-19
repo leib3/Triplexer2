@@ -14,4 +14,6 @@ void timerinit();
 void sampleTimer_isr();
 void adc0_isr();
 void adc1_isr();
+void enableInterrupts();
+void disableInterrupts();
 

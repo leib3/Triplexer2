@@ -28,7 +28,7 @@ void  init() {
    Serial.begin(9600);
    pinMode(13, OUTPUT);
    //pinMode(0, INPUT);
-   digitalWriteFast(13, HIGH);
+   digitalWriteFast(13, LOW);
    pinMode(PIN_ENTER, INPUT_PULLUP); // menu buttons
    pinMode(PIN_UP, INPUT_PULLUP);
    pinMode(PIN_DOWN, INPUT_PULLUP);
@@ -42,16 +42,15 @@ void  init() {
 
 extern "C" int main() 
 {
-   init();
-  // delayMicroseconds(5000000);
-  // adcinit();
-  // oscinit();
-   debounceInit();
-  // timerinit(); //put this last before while loop if possible. Don't want to start adc timer before we're ready for it.
-  // adcCalibrate();
+  init();
+  adcinit();
+  oscinit();
+  debounceInit();
+  delayMicroseconds(1000000);
+  adcCalibrate();
    while (1) {
    browseMenu();
-   checkosc();
+   //checkosc(); //this function only works inside a while loop
    } 
 }
 

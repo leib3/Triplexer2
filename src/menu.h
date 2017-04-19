@@ -25,4 +25,5 @@ typedef struct MenuStruct
 void browseMenu();
 void showMenu();
 void debounceInit();
+void savePreset();
 
