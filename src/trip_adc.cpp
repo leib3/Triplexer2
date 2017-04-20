@@ -166,21 +166,21 @@ void timerinit(){
    t_response_curve = linear_w_edges_response_curve;
 //dummy settings for testing without Zach
 //delete all of this later
-   Settings->setParamOption('X', INV, 0);
-   Settings->setParamOption('Y', INV, 0);
-   Settings->setParamOption('T', INV, 0);
-   Settings->setParamOption('X', MIDICC, 86);
-   Settings->setParamOption('Y', MIDICC, 85);
-   Settings->setParamOption('T', MIDICC, 92);
-   Settings->setParamOption('X', MIDICHNL, 1);
-   Settings->setParamOption('Y', MIDICHNL, 1);
-   Settings->setParamOption('T', MIDICHNL, 1);
-   Settings->setParamMode('X', MIDIUART);
-   Settings->setParamMode('Y', MIDIUART);
-   Settings->setParamMode('T', MIDIUART);
-   Settings->enOrDisableParam('X', 1);
-   Settings->enOrDisableParam('Y', 1);
-   Settings->enOrDisableParam('T', 1);
+//   Settings->setParamOption('X', INV, 0);
+//   Settings->setParamOption('Y', INV, 0);
+//   Settings->setParamOption('T', INV, 0);
+//   Settings->setParamOption('X', MIDICC, 86);
+//   Settings->setParamOption('Y', MIDICC, 85);
+//   Settings->setParamOption('T', MIDICC, 92);
+//   Settings->setParamOption('X', MIDICHNL, 1);
+//   Settings->setParamOption('Y', MIDICHNL, 1);
+//   Settings->setParamOption('T', MIDICHNL, 1);
+//   Settings->setParamMode('X', MIDIUART);
+//   Settings->setParamMode('Y', MIDIUART);
+//   Settings->setParamMode('T', MIDIUART);
+//   Settings->enOrDisableParam('X', 1);
+//   Settings->enOrDisableParam('Y', 1);
+//   Settings->enOrDisableParam('T', 1);
    
 //stop deleting here!
 }
