@@ -777,11 +777,45 @@ void loadPreset()
 
 }
 
+void dispCalibrate()
+{
+   disableInterrupts();
+   int keypress = 0;
+   lcd.clear();
+   lcd.setCursor(0,0);
+   lcd.print("[Calibrate]");
+   lcd.setCursor(0,1);
+   lcd.print("Proceed?");
+   do {
+      keypress = getButtonPress();
+   } while (keypress != BACK && keypress != ENTER);
+   if (keypress == BACK) return;
+   else {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Remove your foot");
+      delay(1500);
+      calibrateZero();
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Calibrate max");
+      lcd.setCursor(0,1);
+      lcd.print("Press down");
+      delay(1500);
+      calibrateMax();
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Done!");
+      delay(1500);
+      enableInterrupts();
+   }
+}
+
 MenuEntry menu[] =
 {
    {menu_000, 4, 0, 0, 0, 0, 0}, // [Main Menu]         0
    {menu_001, 4, 1, 2, 5, 1, 0},                      // 1
-   {menu_002, 4, 1, 3, 2, 1, 0},                      // 2
+   {menu_002, 4, 1, 3, 2, 1, dispCalibrate},          // 2
    {menu_003, 4, 2, 3, 9, 1, 0}, // Presets           // 3
                                                   
    {menu_100, 4, 0, 0, 0, 0, 0}, // [Config param]    // 4

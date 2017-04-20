@@ -38,6 +38,7 @@ void  init() {
    pinMode(PIN_SAVE, INPUT_PULLUP);
    MIDI.begin(1);
    lcd.begin(16,2);
+   debounceInit();
 
    showMenu();
 }
@@ -46,10 +47,9 @@ extern "C" int main()
 {
   init();
   adcinit();
+  dispCalibrate();
   oscinit();
-  debounceInit();
-  delayMicroseconds(1000000);
-  adcCalibrate();
+  //adcCalibrate();
    while (1) {
    browseMenu();
    checkmidi();
