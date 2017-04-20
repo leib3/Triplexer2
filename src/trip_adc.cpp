@@ -20,8 +20,9 @@ const int readPinLL = A2; // uses ADC1
 const int readPinLR = A3; // uses ADC1
 
 struct savebuf{
-   int x; 
-   int y;
+   unsigned int x; 
+   unsigned int y;
+   unsigned int t;
 };
 
 
@@ -289,7 +290,7 @@ void sampleTimer_isr(){
    static unsigned int x_index_buf[BUFSZ] = {0};
    static unsigned int y_index_buf[BUFSZ] = {0};
    static unsigned int t_index_buf[BUFSZ] = {0};
-   static struct savebuf savebuf[SAVEBUFSZ]={ {0,0}, {0,0}, {0,0}, {0,0}, {0,0} };
+   static struct savebuf savebuf[SAVEBUFSZ]={ {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
    static int save_buf_i=0;
    static int save_buf_clock_div = 0;
    bool oscSendEnable;
@@ -334,6 +335,7 @@ void sampleTimer_isr(){
    if(new_t_index < TINDEXTHRESH){
       new_x_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].x;
       new_y_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].y;
+      new_t_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].t;
    } 
    // else update save buffer (with proper clock division)
    else {
@@ -342,6 +344,7 @@ void sampleTimer_isr(){
         save_buf_i= (save_buf_i+1)%SAVEBUFSZ;
         savebuf[save_buf_i].x = new_x_index;
         savebuf[save_buf_i].y = new_y_index;
+        savebuf[save_buf_i].t = new_t_index;
       }
    }
    //calculate average index and offset using buffer

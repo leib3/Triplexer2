@@ -6,6 +6,7 @@
 #include "trip_osc.h"
 #include "trip_adc.h"
 #include "MIDI.h"
+#include "trip_midi.h"
 
 
 
@@ -51,6 +52,7 @@ extern "C" int main()
   adcCalibrate();
    while (1) {
    browseMenu();
+   checkmidi();
    //checkosc(); //this function only works inside a while loop
    } 
 }
