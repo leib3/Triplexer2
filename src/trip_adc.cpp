@@ -5,7 +5,7 @@
 #include "MIDI.h"
 
 #define MIDICLOCKDIV 		100   	//UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
-#define TINDEXTHRESH   		4000  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
+#define TINDEXTHRESH   		3000  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
 #define SAVEBUFCLOCKDIV  	100   
 #define SAVEBUFSZ		5	//number of values saved by buffer for when user removes foot. 
 
@@ -44,6 +44,8 @@ unsigned short *t_response_curve;
 static unsigned short linear_response_curve[257] = {0};
 static unsigned short linear_w_edges_response_curve[257] = {0};
 static unsigned short log_response_curve[257] = {0};
+
+ unsigned short * curves[] = {linear_w_edges_response_curve, linear_response_curve, log_response_curve};
 
 void linear_response_curve_init(){
    short i;
@@ -162,9 +164,15 @@ void adcinit(){
 void timerinit(){
    sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
    sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
+   x_response_curve = curves[Settings->getParamSetting('X', RESPCURVE)];
+   y_response_curve = curves[Settings->getParamSetting('Y', RESPCURVE)];
+   t_response_curve = curves[Settings->getParamSetting('T', RESPCURVE)];
+/*  
+
    x_response_curve = linear_w_edges_response_curve;
    y_response_curve = linear_w_edges_response_curve;
    t_response_curve = linear_w_edges_response_curve;
+*/
 //dummy settings for testing without Zach
 //delete all of this later
 //   Settings->setParamOption('X', INV, 0);
@@ -195,8 +203,7 @@ void disableInterrupts(){
 void enableInterrupts(){
    myAdc.enableInterrupts(ADC_0);
    myAdc.enableInterrupts(ADC_1);
-   sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
-   sampleTimer.priority(20);
+   timerinit();
 }
 
 //called by adcCalibrate
