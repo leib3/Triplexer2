@@ -1003,9 +1003,9 @@ void browseMenu() {
       // they were before in the menu
    }
    if (keypress != -1) { // only redraw menu if keypress is detected
-      //disableInterrupts();
+      disableInterrupts();
       showMenu();
-      //enableInterrupts();
+      enableInterrupts();
    }
 }
 
