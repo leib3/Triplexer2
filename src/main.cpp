@@ -48,7 +48,7 @@ extern "C" int main()
   init();
   adcinit();
   oscinit();
-  dispCalibrate();
+  calEEPROMinit()
   loadPresetDefault();
   //adcCalibrate();
    while (1) {

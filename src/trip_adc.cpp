@@ -231,6 +231,12 @@ void calibrateZero(void){
     z_ur = m_ur >> 8;
     z_ll = m_ll >> 8;
     z_lr = m_lr >> 8;
+    //these are for saving calibration into EEPROM. The saving happens after calibrate max.
+    calEEPROM.z_ul = z_ul;
+    calEEPROM.z_ur = z_ur;
+    calEEPROM.z_ll = z_ll;
+    calEEPROM.z_lr = z_lr;
+
 }
 
 //called by adcCalibrate
@@ -255,12 +261,13 @@ void calibrateMax(void){
     m_lr = ((int)m_lr) < 0 ? 0 : m_lr;
     //add, scaling by sensitivity for each sensor
     max_total = m_ul*ul_sens + m_ur*ur_sens+m_lr*lr_sens+m_ll*ll_sens;
-    EEPROM.put(5*sizeof(tpxSettings), 
+    calEEPROM.max_total = max_total;
+    EEPROM.put(5*sizeof(tpxSettings), calEEPROM);  //avoid overwriting setting presets
 }
 
 
 void adcCalibrate(){
-//using LED indication for now. TODO Use display later.
+//using LED indication as a test function. Has been replaced by a function that uses LCD display
     //turn off interrupts for timer and adc
     myAdc.disableInterrupts(ADC_0);
     myAdc.disableInterrupts(ADC_1);
@@ -301,6 +308,15 @@ void adcCalibrate(){
     return;
 }
 
+void calEEPROMinit(){
+    //load calirbation values from EEPROM into the necessary variables
+    calEEPROM = EEPROM.get(5*sizeof(tpxSettings), calEEPROM);
+    z_ul = calEEPROM.z_ul;
+    z_ur = calEEPROM.z_ur;
+    z_ll = calEEPROM.z_ll;
+    z_lr = calEEPROM.z_lr;
+    max_total = calEEPROM.max_total;
+}
 
 void sampleTimer_isr(){
    static int current_buffer_i = 0;

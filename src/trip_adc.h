@@ -18,4 +18,5 @@ void enableInterrupts();
 void disableInterrupts();
 void calibrateMax();
 void calibrateZero();
+void calEEPROMinit();
 
