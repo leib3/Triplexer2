@@ -777,6 +777,18 @@ void loadPreset()
 
 }
 
+void loadPresetDefault()
+{
+  EEPROM.get((0)*sizeof(tpxSettings), *Settings);
+  lcd.setCursor(0,0);
+  lcd.print("Preset ");
+  lcd.print(1);
+  lcd.setCursor(1,1);
+  lcd.print(" loaded");
+  delay(1000);
+  return;
+}
+
 void dispCalibrate()
 {
    disableInterrupts();

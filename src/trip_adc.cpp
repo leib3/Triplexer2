@@ -3,6 +3,7 @@
 #include "WProgram.h"
 #include "settings.h"
 #include "MIDI.h"
+#include "EEPROM.h"
 
 #define MIDICLOCKDIV 		100   	//UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
 #define TINDEXTHRESH   		3000  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
@@ -25,10 +26,19 @@ struct savebuf{
    unsigned int t;
 };
 
+//for saving calibration values in EEPROM and get them out
+struct calEEPROM{
+   int max_total;
+   int z_ul;
+   int z_ur;
+   int z_ll;
+   int z_lr;
+}
+
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
-unsigned int ul_sens = 105; unsigned int ur_sens = 255; unsigned int ll_sens=241; unsigned int lr_sens = 213; //sensitivy values for each sensor, 0 to 255
+unsigned int ul_sens = 95; unsigned int ur_sens = 255; unsigned int ll_sens=231; unsigned int lr_sens = 203; //sensitivy multiplier values for each sensor, 0 to 255
 static int max_total; // max total weight
 volatile int adc0_state, adc1_state;   //state used in adc isr's
 
@@ -245,6 +255,7 @@ void calibrateMax(void){
     m_lr = ((int)m_lr) < 0 ? 0 : m_lr;
     //add, scaling by sensitivity for each sensor
     max_total = m_ul*ul_sens + m_ur*ur_sens+m_lr*lr_sens+m_ll*ll_sens;
+    EEPROM.put(5*sizeof(tpxSettings), 
 }
 
 

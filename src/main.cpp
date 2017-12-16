@@ -49,6 +49,7 @@ extern "C" int main()
   adcinit();
   oscinit();
   dispCalibrate();
+  loadPresetDefault();
   //adcCalibrate();
    while (1) {
    browseMenu();

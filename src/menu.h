@@ -27,4 +27,5 @@ void showMenu();
 void debounceInit();
 void savePreset();
 void dispCalibrate();
+void loadPresetDefault();
 
