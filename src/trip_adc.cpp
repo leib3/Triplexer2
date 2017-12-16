@@ -33,7 +33,7 @@ struct calEEPROM{
    int z_ur;
    int z_ll;
    int z_lr;
-}
+} calEEPROM;
 
 
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
