@@ -16,9 +16,9 @@ extern tpxSettings * Settings;
 
 //adc pin defs
 const int readPinUL = A0; // uses ADC0
-const int readPinUR = A1; // uses ADC0
-const int readPinLL = A2; // uses ADC1
-const int readPinLR = A3; // uses ADC1
+const int readPinUR = A3; // uses ADC0
+const int readPinLL = A1; // uses ADC0 on Teensy 3.6 (1 on 3.2)
+const int readPinLR = A2; // uses ADC0
 
 struct savebuf{
    unsigned int x; 
@@ -148,7 +148,7 @@ void adcinit(){
     // If you enable interrupts, notice that the isr will read the result, so that isComplete() will return false (most of the time)
 
 
-
+/*
     ////// ADC1 /////
     adc->setAveraging(NUMAVG, ADC_1); // set number of averages
     adc->setResolution(ADCBITS, ADC_1); // set bits of resolution
@@ -168,7 +168,7 @@ void adcinit(){
     //also note you can't use the basic blocking analogRead function without disabling interrupts first.
     adc->enableInterrupts(ADC_0);
     adc->enableInterrupts(ADC_1);
-    
+    */
 }
 
 void timerinit(){
@@ -206,13 +206,13 @@ void timerinit(){
 
 void disableInterrupts(){
    sampleTimer.end();
-   myAdc.disableInterrupts(ADC_0);
-   myAdc.disableInterrupts(ADC_1);
+   //myAdc.disableInterrupts(ADC_0);
+   //myAdc.disableInterrupts(ADC_1);
 }
 
 void enableInterrupts(){
-   myAdc.enableInterrupts(ADC_0);
-   myAdc.enableInterrupts(ADC_1);
+   //myAdc.enableInterrupts(ADC_0);
+   //myAdc.enableInterrupts(ADC_1);
    timerinit();
 }
 
@@ -268,9 +268,7 @@ void calibrateMax(void){
 
 void adcCalibrate(){
 //using LED indication as a test function. Has been replaced by a function that uses LCD display
-    //turn off interrupts for timer and adc
-    myAdc.disableInterrupts(ADC_0);
-    myAdc.disableInterrupts(ADC_1);
+    //turn off timer interrupt
     sampleTimer.end();
     //LED on
     pinMode(13, OUTPUT);
@@ -302,8 +300,8 @@ void adcCalibrate(){
     Serial.print("\n\n");
 */
     //turn on interrupts for timer and adc
-    myAdc.enableInterrupts(ADC_0);
-    myAdc.enableInterrupts(ADC_1);
+    //myAdc.enableInterrupts(ADC_0);
+    //myAdc.enableInterrupts(ADC_1);
     timerinit();
     return;
 }
@@ -319,6 +317,16 @@ void calEEPROMinit(){
 }
 
 void sampleTimer_isr(){
+   ul = myAdc.adc0->analogRead(readPinUL);
+   ll = myAdc.adc0->analogRead(readPinLL);
+   lr = myAdc.adc0->analogRead(readPinLR);
+   ur = myAdc.adc0->analogRead(readPinUR);
+   Serial.print(ul, HEX);
+   Serial.print("  ");
+   Serial.println(ur, HEX);
+   Serial.print(ll, HEX);
+   Serial.print("  ");
+   Serial.println(lr, HEX);
    static int current_buffer_i = 0;
    //buffers for output index values
    static unsigned int x_index_buf[BUFSZ] = {0};
@@ -469,15 +477,16 @@ void sampleTimer_isr(){
    }
    if(oscSendEnable)
        oscsend();
-
+/*
 //change adc states
    adc0_state = 0;
    adc1_state = 0;
    myAdc.startSingleRead(readPinUL, ADC_0);
-   myAdc.startSingleRead(readPinLL, ADC_1);
+   myAdc.startSingleRead(readPinLL, ADC_0);
+*/
 }
 
-
+/*
 //these adc isr's will either read the left value, then start the right value read, or
 //on the subsequent time, only read the right value
 //they are designed to work with a separate timer interrupt, which starts the first read.
@@ -494,7 +503,8 @@ void adc1_isr(){
    if(adc1_state == 0){
       adc1_state = 1;
       ll = myAdc.adc1->readSingle();
-      myAdc.startSingleRead(readPinLR, ADC_1);
+      myAdc.startSingleRead(readPinLR, ADC_0);
    } else
    lr = myAdc.adc1->readSingle();
 }
+*/

@@ -41,7 +41,7 @@
 // Arduino.h must be included before MIDI.h to define CORE_TEENSY
 #if defined(CORE_TEENSY)
 #undef USE_SERIAL_PORT
-#define USE_SERIAL_PORT         Serial1
+#define USE_SERIAL_PORT         Serial4
 #endif
 
 

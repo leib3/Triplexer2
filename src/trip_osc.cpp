@@ -5,7 +5,6 @@
 #include "SLIPEncodedSerial.h"
 #include "WProgram.h"
 #include "settings.h"
-#include "menu.h"
 #include "trip_adc.h"
 
 
@@ -215,7 +214,7 @@ void osc_save(OSCMessage &msg){
    bool save;
    save=(bool)msg.getInt(0);
    if(save){
-      savePreset();//TODO this function will require user to use the buttons to choose where to save it. Could change that.
+      //savePreset();//TODO this function will require user to use the buttons to choose where to save it. Could change that.
    }
 }
 

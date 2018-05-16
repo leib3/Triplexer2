@@ -2,7 +2,7 @@
 TARGET = $(notdir $(CURDIR))
 
 # The teensy version to use, 30, 31, 35, 36, or LC
-TEENSY = 31
+TEENSY = 36
 
 # Set to 24000000, 48000000, or 96000000 to set CPU core speed
 TEENSY_CORE_SPEED = 48000000
@@ -86,7 +86,7 @@ else ifeq ($(TEENSY), 36)
     CPPFLAGS += -D__MK66FX1M0__ -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16
     LDSCRIPT = $(COREPATH)/mk66fx1m0.ld
     LDFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -T$(LDSCRIPT)
-    LIBS += -larm_cortexM4lf_math
+    #LIBS += -larm_cortexM4lf_math
 else
     $(error Invalid setting for TEENSY)
 endif
