@@ -49,12 +49,12 @@ void oscsend1(char * target, int value){
 }
 
 
-void oscsend3(unsigned short x, unsigned short y, unsigned short t){
+void oscsend3(unsigned short x, unsigned short y, unsigned short z){
     OSCBundle myBundle;
     //OSCBundle's add' returns the OSCMessage so the message's 'add' can be composed together
     myBundle.add("/teensy/x").add((int32_t)x);
     myBundle.add("/teensy/y").add((int32_t)y);
-    myBundle.add("/teensy/t").add((int32_t)t);
+    myBundle.add("/teensy/z").add((int32_t)z);
 
     SLIPSerial.beginPacket();
         myBundle.send(SLIPSerial); // send the bytes to the SLIP stream
@@ -110,17 +110,17 @@ void osc_send(OSCMessage &msg){
    param = parambuf[0];
    paramCAPS=param+('A'-'a');
    //send cc, ch, inv, mode, en
-   setting_ret=Settings->getParamSetting(paramCAPS, MIDICC);
+   setting_ret=Settings->getParamSetting(paramCAPS, SETTINGS_MIDICC);
    strcopy(target, "/teensy/pcc", OSCMAXADDR);
    target[OSCPARAMINDEX] = param;
    oscsend1((char *)target, setting_ret);
    //ch
-   setting_ret=Settings->getParamSetting(paramCAPS, MIDICHNL);
+   setting_ret=Settings->getParamSetting(paramCAPS, SETTINGS_MIDICHNL);
    strcopy(target, "/teensy/pch", OSCMAXADDR);
    target[OSCPARAMINDEX] = param;
    oscsend1((char *)target, setting_ret);
    //inv
-   setting_ret=Settings->getParamSetting(paramCAPS, INV);
+   setting_ret=Settings->getParamSetting(paramCAPS, SETTINGS_INV);
    strcopy(target, "/teensy/pinv", OSCMAXADDR);
    target[OSCPARAMINDEX] = param;
    oscsend1((char *)target, setting_ret);
@@ -149,7 +149,7 @@ void osc_cc(OSCMessage &msg){
    param+=('A'-'a');
    //Serial.print("param = ");
    //Serial.println(param);
-   Settings->setParamOption(param, MIDICC, cc);
+   Settings->setParamOption(param, SETTINGS_MIDICC, cc);
 }
 
 void osc_ch(OSCMessage &msg){
@@ -163,7 +163,7 @@ void osc_ch(OSCMessage &msg){
      param = buffer[OSCPARAMINDEX];
    }
    param+=('A'-'a');
-   Settings->setParamOption(param, MIDICHNL, ch);
+   Settings->setParamOption(param, SETTINGS_MIDICHNL, ch);
 }
 
 void osc_inv(OSCMessage &msg){
@@ -177,7 +177,7 @@ void osc_inv(OSCMessage &msg){
      param = buffer[OSCPARAMINDEX];
    } else return;
    param+=('A'-'a');
-   Settings->setParamOption(param, INV, inv);
+   Settings->setParamOption(param, SETTINGS_INV, inv);
 }
 
 void osc_mode(OSCMessage &msg){

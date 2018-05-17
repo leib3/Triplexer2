@@ -6,7 +6,7 @@
 #include "EEPROM.h"
 
 #define MIDICLOCKDIV 		100   	//UART MIDI should output more slowly than OSC or USB MIDI. The factor is set here
-#define TINDEXTHRESH   		3000  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
+#define TINDEXTHRESH   		0  	//threshhold t index (out of 64k), below which buffered X and Y values are used instead of new ones
 #define SAVEBUFCLOCKDIV  	100   
 #define SAVEBUFSZ		5	//number of values saved by buffer for when user removes foot. 
 
@@ -36,12 +36,10 @@ struct calEEPROM{
 } calEEPROM;
 
 
-volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3, respectively)
+volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
-unsigned int ul_sens = 95; unsigned int ur_sens = 255; unsigned int ll_sens=231; unsigned int lr_sens = 203; //sensitivy multiplier values for each sensor, 0 to 255
+unsigned int ul_sens = 255; unsigned int ur_sens = 255; unsigned int ll_sens=255; unsigned int lr_sens = 255; //sensitivy multiplier values for each sensor, 0 to 255
 static int max_total; // max total weight
-volatile int adc0_state, adc1_state;   //state used in adc isr's
-
 ADC myAdc;
 IntervalTimer sampleTimer;
 
@@ -73,20 +71,6 @@ void linear_w_edges_response_curve_init(){
    for(i = 256 - n; i<257; i++)
        linear_w_edges_response_curve[i] = 0xffff; 
 }
-/*
-void log_response_curve_init(){
-   double multiplier = 0.0;
-   double previous = 1.0;
-   int i;
-   log_response_curve[0] = 1; //initial value
-   multiplier = pow((double)(1<<16), 1.0/256.0);
-   for(i = 1; i<256; i++){
-      previous =  previous*multiplier;
-      log_response_curve[i] = (unsigned short)previous;
-   }
-   log_response_curve[256] = (unsigned short)0xffff;
-}
-*/ 
 
 //adding edges for log response curve
 void log_response_curve_init(){
@@ -114,17 +98,6 @@ void adcinit(){
     pinMode(readPinUR, INPUT);
     pinMode(readPinLL, INPUT);
     pinMode(readPinLR, INPUT);
-/*
-    pinMode(A10, INPUT); //Diff Channel 0 Positive
-    pinMode(A11, INPUT); //Diff Channel 0 Negative
-    #if ADC_NUM_ADCS>1
-    pinMode(A12, INPUT); //Diff Channel 3 Positive
-    pinMode(A13, INPUT); //Diff Channel 3 Negative
-    #endif
-*/
-    Serial.begin(9600);
-
-    Serial.println("Begin setup");
 
     ///// ADC0 ////
     // reference can be ADC_REFERENCE::REF_3V3, ADC_REFERENCE::REF_1V2 (not for Teensy LC) or ADC_REFERENCE::REF_EXT.
@@ -174,32 +147,38 @@ void adcinit(){
 void timerinit(){
    sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
    sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
-   x_response_curve = curves[Settings->getParamSetting('X', RESPCURVE)];
-   y_response_curve = curves[Settings->getParamSetting('Y', RESPCURVE)];
-   t_response_curve = curves[Settings->getParamSetting('T', RESPCURVE)];
-/*  
+   //x_response_curve = curves[Settings->getParamSetting('X', RESPCURVE)];
+   //y_response_curve = curves[Settings->getParamSetting('Y', RESPCURVE)];
+   //t_response_curve = curves[Settings->getParamSetting('T', RESPCURVE)]; 
 
    x_response_curve = linear_w_edges_response_curve;
    y_response_curve = linear_w_edges_response_curve;
    t_response_curve = linear_w_edges_response_curve;
-*/
 //dummy settings for testing without Zach
 //delete all of this later
-//   Settings->setParamOption('X', INV, 0);
-//   Settings->setParamOption('Y', INV, 0);
-//   Settings->setParamOption('T', INV, 0);
-//   Settings->setParamOption('X', MIDICC, 86);
-//   Settings->setParamOption('Y', MIDICC, 85);
-//   Settings->setParamOption('T', MIDICC, 92);
-//   Settings->setParamOption('X', MIDICHNL, 1);
-//   Settings->setParamOption('Y', MIDICHNL, 1);
-//   Settings->setParamOption('T', MIDICHNL, 1);
-//   Settings->setParamMode('X', MIDIUART);
-//   Settings->setParamMode('Y', MIDIUART);
-//   Settings->setParamMode('T', MIDIUART);
-//   Settings->enOrDisableParam('X', 1);
-//   Settings->enOrDisableParam('Y', 1);
-//   Settings->enOrDisableParam('T', 1);
+   linear_w_edges_response_curve_init();
+   
+   Settings->setParamOption('X', SETTINGS_INV, 0);
+   Settings->setParamOption('Y', SETTINGS_INV, 0);
+   Settings->setParamOption('Z', SETTINGS_INV, 0);
+   Settings->setParamOption('X', SETTINGS_MIDICC, 1);
+   Settings->setParamOption('Y', SETTINGS_MIDICC, 2);
+   Settings->setParamOption('Z', SETTINGS_MIDICC, 3);
+   Settings->setParamOption('X', SETTINGS_MIDICHNL, 1);
+   Settings->setParamOption('Y', SETTINGS_MIDICHNL, 1);
+   Settings->setParamOption('Z', SETTINGS_MIDICHNL, 1);
+   Settings->setParamMode('X', SETTINGS_MODE_MIDIUSB);
+   Settings->setParamMode('Y', SETTINGS_MODE_MIDIUSB);
+   Settings->setParamMode('Z', SETTINGS_MODE_MIDIUSB);
+   Settings->enOrDisableParam('X', 1);
+   Settings->enOrDisableParam('Y', 1);
+   Settings->enOrDisableParam('Z', 1);
+   z_ul = 2000;
+   z_ll = 2000;
+   z_lr = 2000;
+   z_ur = 2000;
+   max_total = 6400000;
+
    
 //stop deleting here!
 }
@@ -321,12 +300,13 @@ void sampleTimer_isr(){
    ll = myAdc.adc0->analogRead(readPinLL);
    lr = myAdc.adc0->analogRead(readPinLR);
    ur = myAdc.adc0->analogRead(readPinUR);
-   Serial.print(ul, HEX);
+   Serial.println("start isr");
+   /*Serial.print(ul, HEX);
    Serial.print("  ");
    Serial.println(ur, HEX);
    Serial.print(ll, HEX);
    Serial.print("  ");
-   Serial.println(lr, HEX);
+   Serial.println(lr, HEX);*/
    static int current_buffer_i = 0;
    //buffers for output index values
    static unsigned int x_index_buf[BUFSZ] = {0};
@@ -363,16 +343,21 @@ void sampleTimer_isr(){
    lr_norm = lr_zc * lr_sens;
    //calculate new x, y, and t indices
    t_norm = ul_norm+ur_norm+ll_norm+lr_norm;
+   Serial.println(t_norm, HEX);
    if(t_norm == 0) t_norm = 1; //avoid divide-by-zero errors
    new_x_index = ((((long long)ur_norm + (long long)lr_norm)<<16)/(long long)t_norm ); 
    new_y_index = (( ( (long long)ul_norm + (long long)ur_norm)<<16)/(long long)t_norm );    
    new_t_index =     (((long long)t_norm)<<16)  / max_total ;
+   Serial.print("new_t_index =");
+   Serial.println(new_t_index);
    if(new_t_index >= 1<<16){
       new_t_index = 0xffff; 
    }
    //do save buf stuff here. replace new indices with indices from about a second ago, if new t_index is below TINDEXTHRESH
    //while TINDEXTHRESH stays below threshold, don't move the index into the buffer, so the same values are used.
-   
+   Serial.println(new_x_index);
+   Serial.println(new_y_index);
+   Serial.println(new_t_index);
    //check for new_t_index below threshold. if it is, handle it by replacing new values with buffered ones
    if(new_t_index < TINDEXTHRESH){
       new_x_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].x;
@@ -412,11 +397,11 @@ void sampleTimer_isr(){
    y = y_response_curve[y_index]+ ((y_response_curve[y_index+1]-y_response_curve[y_index] )*y_offset  >> 8);
    t = t_response_curve[t_index]+ ((t_response_curve[t_index+1]-t_response_curve[t_index] )*t_offset  >> 8);
    //invert as desired
-   if(Settings->getParamSetting('X', INV))
+   if(Settings->getParamSetting('X', SETTINGS_INV))
       x = 0xffff - x;
-   if(Settings->getParamSetting('Y', INV))
+   if(Settings->getParamSetting('Y', SETTINGS_INV))
       y = 0xffff - y;
-   if(Settings->getParamSetting('T', INV))
+   if(Settings->getParamSetting('Z', SETTINGS_INV))
       t = 0xffff - t;
 
 //OUTPUT SECTION
@@ -424,16 +409,16 @@ void sampleTimer_isr(){
    midiClockDivider = ++midiClockDivider % MIDICLOCKDIV;
    if(Settings->isParamEnabled('X')){
       switch(Settings->getParamMode('X')){
-         case OSC:
+         case SETTINGS_MODE_OSC:
             oscadd1("/teensy/x", x);
             oscSendEnable = 1;
             break;
-         case MIDIUSB:
-               usbMIDI.sendControlChange(Settings->getParamSetting('X', MIDICC), (char)(x>>9), Settings->getParamSetting('X', MIDICHNL)); 
+         case SETTINGS_MODE_MIDIUSB:
+               usbMIDI.sendControlChange(Settings->getParamSetting('X', SETTINGS_MIDICC), (char)(x>>9), Settings->getParamSetting('X', SETTINGS_MIDICHNL)); 
             break;
-         case MIDIUART:
+         case SETTINGS_MODE_MIDIUART:
             if(!((midiClockDivider+MIDICLOCKDIV/3)%MIDICLOCKDIV)){
-               MIDI.sendControlChange((byte)Settings->getParamSetting('X', MIDICC), (byte) (0xff&(x>>9)), (byte)Settings->getParamSetting('X', MIDICHNL));
+               MIDI.sendControlChange((byte)Settings->getParamSetting('X', SETTINGS_MIDICC), (byte) (0xff&(x>>9)), (byte)Settings->getParamSetting('X', SETTINGS_MIDICHNL));
             }
             break;
          default: 
@@ -442,33 +427,33 @@ void sampleTimer_isr(){
    }
    if(Settings->isParamEnabled('Y')){
       switch(Settings->getParamMode('Y')){
-         case OSC:
+         case SETTINGS_MODE_OSC:
             oscadd1("/teensy/y", y);
             oscSendEnable = 1;
             break;
-         case MIDIUSB:
-            usbMIDI.sendControlChange(Settings->getParamSetting('Y', MIDICC), (char)(y>>9), Settings->getParamSetting('Y', MIDICHNL)); 
+         case SETTINGS_MODE_MIDIUSB:
+            usbMIDI.sendControlChange(Settings->getParamSetting('Y', SETTINGS_MIDICC), (char)(y>>9), Settings->getParamSetting('Y', SETTINGS_MIDICHNL)); 
             break;
-         case MIDIUART:
+         case SETTINGS_MODE_MIDIUART:
             if(!(midiClockDivider))
-               MIDI.sendControlChange((byte)Settings->getParamSetting('Y', MIDICC), (byte) (0xff&(y>>9)), (byte)Settings->getParamSetting('Y', MIDICHNL));
+               MIDI.sendControlChange((byte)Settings->getParamSetting('Y', SETTINGS_MIDICC), (byte) (0xff&(y>>9)), (byte)Settings->getParamSetting('Y', SETTINGS_MIDICHNL));
             break;
          default: 
             break;
       }
    }
-   if(Settings->isParamEnabled('T')){
-      switch(Settings->getParamMode('T')){
-         case OSC:
-            oscadd1("/teensy/t", t);
+   if(Settings->isParamEnabled('Z')){
+      switch(Settings->getParamMode('Z')){
+         case SETTINGS_MODE_OSC:
+            oscadd1("/teensy/z", t);
             oscSendEnable = 1;
             break;
-         case MIDIUSB:
-            usbMIDI.sendControlChange(Settings->getParamSetting('T', MIDICC), (char)(t>>9), Settings->getParamSetting('T', MIDICHNL)); 
+         case SETTINGS_MODE_MIDIUSB:
+            usbMIDI.sendControlChange(Settings->getParamSetting('Z', SETTINGS_MIDICC), (char)(t>>9), Settings->getParamSetting('Z', SETTINGS_MIDICHNL)); 
             break;
-         case MIDIUART:
-            if(!((midiClockDivider+2*MIDICLOCKDIV/3)%MIDICLOCKDIV) ){      //
-               MIDI.sendControlChange((byte)Settings->getParamSetting('T', MIDICC), (byte) (0xff&(t>>9)), (byte)Settings->getParamSetting('T', MIDICHNL));
+         case SETTINGS_MODE_MIDIUART:
+            if(!((midiClockDivider+2*MIDICLOCKDIV/3)%MIDICLOCKDIV) ){
+               MIDI.sendControlChange((byte)Settings->getParamSetting('Z', SETTINGS_MIDICC), (byte) (0xff&(t>>9)), (byte)Settings->getParamSetting('T', SETTINGS_MIDICHNL));
                }
             break;
          default: 
@@ -477,34 +462,10 @@ void sampleTimer_isr(){
    }
    if(oscSendEnable)
        oscsend();
-/*
-//change adc states
-   adc0_state = 0;
-   adc1_state = 0;
-   myAdc.startSingleRead(readPinUL, ADC_0);
-   myAdc.startSingleRead(readPinLL, ADC_0);
-*/
-}
 
-/*
-//these adc isr's will either read the left value, then start the right value read, or
-//on the subsequent time, only read the right value
-//they are designed to work with a separate timer interrupt, which starts the first read.
-void adc0_isr(){
-   if(adc0_state == 0){
-      adc0_state = 1;
-      ul = myAdc.adc0->readSingle();
-      myAdc.startSingleRead(readPinUR, ADC_0);
-   } else
-   ur = myAdc.adc0->readSingle();
+  Serial.println(x);
+  Serial.println(y);
+  Serial.println(t);
+  Serial.println("");
+  
 }
-
-void adc1_isr(){
-   if(adc1_state == 0){
-      adc1_state = 1;
-      ll = myAdc.adc1->readSingle();
-      myAdc.startSingleRead(readPinLR, ADC_0);
-   } else
-   lr = myAdc.adc1->readSingle();
-}
-*/

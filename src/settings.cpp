@@ -11,73 +11,38 @@
 // OSC options are stored at different indices from the MIDI options.
 // How much control do we give the user wrt OSC here?
 // Couldn't there be any number of possible options, given the open nature of OSC?
-   void param::update(uint8_t option, uint8_t value)
+   void param::set(uint8_t option, uint8_t value)
    {
       settings[option] = value; // menu.cpp already takes care of ensuring all MIDI settings
       // fall in valid range
    }
-   uint8_t param::read(uint8_t option) // read current menu option value
+   uint8_t param::get(uint8_t option) // read current menu option value
    {
       return settings[option];
    }
 
-
-   bool tpxSettings::isValid(uint8_t XMode, uint8_t YMode, uint8_t TOTMode) // check if valid combination of modes is assigned
-      // to parameters (X, Y, TOT)
-      // most likely done after user hits enter on mode selection screen
-   {
-      uint8_t temp[3] = {XMode, YMode, TOTMode};
-      bool OSCflag = false;
-      bool MIDIUSBflag = false;
-      for (int i = 0; i < 3; ++i) {
-         if (temp[i] == MIDIUSB) {
-            MIDIUSBflag = true;
-         }
-         else if (temp[i] == OSC) {
-            OSCflag = true;
-         }
-         else continue;
-      }
-      if (MIDIUSBflag && OSCflag) return false;
-      else return true;
-   }
-
-      // These functions must report to the LCD menu logic if a mode combination is invalid. 
-      // Try catch?
    uint8_t tpxSettings::setParamMode(char param, uint8_t modeToSet)
    {
       switch (param) {
          case 'X':
             // test for valid combination of modes with prospective mode change
-            if (isValid(modeToSet, Y.mode, TOT.mode)) {
-               X.mode = modeToSet;
-               return 1;
-            }
-            else {
-               Serial.println("ERROR: MIDI/USB and OSC cannot be on at the same time");
-               return -1;
+            {
+              X.mode = modeToSet;
+              return 0;
             }
         case 'Y':
-            if (isValid(X.mode, modeToSet, TOT.mode)) {
-               Y.mode = modeToSet;
-               return 1;
+            {
+              Y.mode = modeToSet;
+              return 0;
             }
-            else {
-               Serial.println("ERROR: MIDI/USB and OSC cannot be on at the same time");
-               return -1;
-            }
-        case 'T':
-                      
-            if (isValid(X.mode, Y.mode, modeToSet)) {
-               TOT.mode = modeToSet;
-               return 1;
-            }
-            else {
-               Serial.println("ERROR: MIDI/USB and OSC cannot be on at the same time");
-              return -1;
+        case 'Z':
+            {
+               Z.mode = modeToSet;
+               return 0;
             }
         default:
-            return -2; // error, invalid parameter
+            Serial.println("in tpxSettings::setParamMode invalid param name.");
+            return -1; // error, invalid parameter
       }
    }
    
@@ -85,39 +50,11 @@
    {
       switch (param) {
          case 'X':
-            if (X.mode == MIDIUSB) {
-               return MIDIUSB;
-            }
-            else if (X.mode == MIDIUART) {
-               return MIDIUART;
-            }
-            else if (X.mode == OSC) {
-               return OSC;
-            }
-            else return -1; // error
+            return X.mode;
          case 'Y':
-            if (Y.mode == MIDIUSB) {
-               return MIDIUSB;
-            }
-            else if (Y.mode == MIDIUART) {
-               return MIDIUART;
-            }
-            else if (Y.mode == OSC) {
-               return OSC;
-            }
-            else return -1; // error
-         case 'T':
-            if (TOT.mode == MIDIUSB) {
-               return MIDIUSB;
-            }
-            else if (TOT.mode == MIDIUART) {
-               return MIDIUART;
-            }
-            else if (TOT.mode == OSC) {
-               return OSC;
-            }
-            else return -1; // error
-
+            return Y.mode;
+         case 'Z':
+            return Z.mode;
          default:
             return -1; // invalid parameter passed to function
       }
@@ -126,13 +63,13 @@
    {
       switch (param) {
          case 'X':
-            return X.read(key);
+            return X.get(key);
 
          case 'Y':
-            return Y.read(key);
+            return Y.get(key);
 
-         case 'T':
-            return TOT.read(key);
+         case 'Z':
+            return Z.get(key);
 
          default:
             return -1; // invalid parameter passed to function
@@ -152,18 +89,18 @@
    {
       switch (param) {
          case 'X':
-            X.update(option, value);
+            X.set(option, value);
             break;
          case 'Y':
-            Y.update(option, value);
+            Y.set(option, value);
             break;
-         case 'T':
-            TOT.update(option, value);
+         case 'Z':
+            Z.set(option, value);
             break;
          default:
             return -1; // error
       }
-      return 1;
+      return 0;
    }
    uint8_t tpxSettings::enOrDisableParam(char param, bool on)
    {
@@ -184,16 +121,16 @@
                Y.enabled = false;
             }
             break;
-         case 'T':
+         case 'Z':
             if (on == true) {
-               TOT.enabled = true;
+               Z.enabled = true;
             }
             else {
-               TOT.enabled = false;
+               Z.enabled = false;
             }
             break;
       }
-      return 1;
+      return 0;
        // need to add error handling
    }
    bool tpxSettings::isParamEnabled(char param)
@@ -201,17 +138,12 @@
       switch (param) {
          case 'X':
             return X.enabled;
-            break;
          case 'Y':
             return Y.enabled;
-            break;
-         case 'T':
-            return TOT.enabled;
-            break;
-       
+         case 'Z':
+            return Z.enabled;
          default: // error
             return false;
       }
    }
-
 
