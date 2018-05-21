@@ -13,6 +13,7 @@
 //this is the current system settings object
 extern tpxSettings * Settings;
 
+volatile unsigned int adc_ticks = 0;
 
 //adc pin defs
 const int readPinUL = A0; // uses ADC0
@@ -145,12 +146,11 @@ void adcinit(){
 }
 
 void timerinit(){
-   sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
-   sampleTimer.priority(20); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
+   adc_ticks = 0;
+   sampleTimer.priority(60); //could tweak this. Teensy interrupts are mostly set to priority=128, so this is a pretty high priority
    //x_response_curve = curves[Settings->getParamSetting('X', RESPCURVE)];
    //y_response_curve = curves[Settings->getParamSetting('Y', RESPCURVE)];
    //t_response_curve = curves[Settings->getParamSetting('T', RESPCURVE)]; 
-
    x_response_curve = linear_w_edges_response_curve;
    y_response_curve = linear_w_edges_response_curve;
    t_response_curve = linear_w_edges_response_curve;
@@ -181,6 +181,7 @@ void timerinit(){
 
    
 //stop deleting here!
+   sampleTimer.begin(sampleTimer_isr, 1000000/SAMPLERATE);
 }
 
 void disableInterrupts(){
@@ -295,18 +296,16 @@ void calEEPROMinit(){
     max_total = calEEPROM.max_total;
 }
 
+//dummy isr for testing
 void sampleTimer_isr(){
+   adc_ticks++;
+}
+
+void sampleTimer_isr_(){
    ul = myAdc.adc0->analogRead(readPinUL);
    ll = myAdc.adc0->analogRead(readPinLL);
    lr = myAdc.adc0->analogRead(readPinLR);
    ur = myAdc.adc0->analogRead(readPinUR);
-   Serial.println("start isr");
-   /*Serial.print(ul, HEX);
-   Serial.print("  ");
-   Serial.println(ur, HEX);
-   Serial.print(ll, HEX);
-   Serial.print("  ");
-   Serial.println(lr, HEX);*/
    static int current_buffer_i = 0;
    //buffers for output index values
    static unsigned int x_index_buf[BUFSZ] = {0};
@@ -343,21 +342,15 @@ void sampleTimer_isr(){
    lr_norm = lr_zc * lr_sens;
    //calculate new x, y, and t indices
    t_norm = ul_norm+ur_norm+ll_norm+lr_norm;
-   Serial.println(t_norm, HEX);
    if(t_norm == 0) t_norm = 1; //avoid divide-by-zero errors
    new_x_index = ((((long long)ur_norm + (long long)lr_norm)<<16)/(long long)t_norm ); 
    new_y_index = (( ( (long long)ul_norm + (long long)ur_norm)<<16)/(long long)t_norm );    
    new_t_index =     (((long long)t_norm)<<16)  / max_total ;
-   Serial.print("new_t_index =");
-   Serial.println(new_t_index);
    if(new_t_index >= 1<<16){
       new_t_index = 0xffff; 
    }
    //do save buf stuff here. replace new indices with indices from about a second ago, if new t_index is below TINDEXTHRESH
    //while TINDEXTHRESH stays below threshold, don't move the index into the buffer, so the same values are used.
-   Serial.println(new_x_index);
-   Serial.println(new_y_index);
-   Serial.println(new_t_index);
    //check for new_t_index below threshold. if it is, handle it by replacing new values with buffered ones
    if(new_t_index < TINDEXTHRESH){
       new_x_index = savebuf[(save_buf_i+1)%SAVEBUFSZ].x;
@@ -463,9 +456,5 @@ void sampleTimer_isr(){
    if(oscSendEnable)
        oscsend();
 
-  Serial.println(x);
-  Serial.println(y);
-  Serial.println(t);
-  Serial.println("");
-  
+   adc_ticks++;
 }

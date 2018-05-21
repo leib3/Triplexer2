@@ -1,3 +1,6 @@
+#ifndef _SETTINGS_H
+#define _SETTINGS_H
+
 #include <stdint.h>
 // convenient defines to pass to setParamMode, get from getParamMode 
 #define SETTINGS_MODE_MIDIUSB 0
@@ -11,9 +14,8 @@
 #define SETTINGS_CURVE_WIDTH 4
 
 class param {
-   private:
-      uint8_t settings[6];
    public:
+      uint8_t settings[6];
       bool enabled;
       uint8_t mode;
       param() : enabled(false), mode(SETTINGS_MODE_MIDIUSB) // on instantiation all params are initially disabled
@@ -44,3 +46,5 @@ class tpxSettings {
       uint8_t setParamOption(char param, uint8_t option, uint8_t value);
       uint8_t enOrDisableParam(char param, bool on);
 };
+
+#endif

@@ -2,9 +2,9 @@
 #include "ADC.h"
 
 //adc macros
-#define NUMAVG    4   //amount of hardware averaging
+#define NUMAVG    1   //amount of hardware averaging
 #define ADCBITS   16  //bit depth of samples from adc
-#define SAMPLERATE 2  //in Hz.
+#define SAMPLERATE 1000  //in Hz.
 #define BUFSZ 16
 #define BUFSZBITS  4
 

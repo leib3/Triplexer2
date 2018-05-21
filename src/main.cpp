@@ -9,81 +9,74 @@
 #include "menu.h"
 #include "rgb.h"
 #include "ST7565.h"
+#include "button.h"
+#include "triplexer.h" //contains stuff that would gunk up main.cpp but doesn't really fit elsewhere
+#include "Encoder.h"
 
 using namespace std;
 
-//Globals
+//extern globals
+extern volatile unsigned int adc_ticks; //global ticks. Incremented by adc isr
+extern IntervalTimer sampleTimer;
+
+// globals
+
+//Menus
+Menu main_menu;
+Menu utilities_menu;
+Menu *current_menu = &main_menu;
+
+//PWM backlight control
+struct rgb_color_t blue {0, 0, 255};
+
+RGB rgb (8, 9, 10);
+
+//ST7565 graphic lcd
 ST7565 lcd(7, 6, 5, 4);
 
-//fixes stupid compiler error. Maybe move this somewhere less obtrusive?
-extern "C"{
-  int _getpid(){ return -1;}
-  int _kill(int pid, int sig){ return -1; }
-  int _write(){return -1;}
-}
+//buttons
+Button save_button(SAVE_BUTTON_PIN, BUTTON_DEBOUNCE_PERIOD);
+Button back_button(BACK_BUTTON_PIN, BUTTON_DEBOUNCE_PERIOD);
+Button enc_button(ENC_BUTTON_PIN, BUTTON_DEBOUNCE_PERIOD);
 
+Encoder encoder(23, 22);
+//settings
 tpxSettings settings_object;
 tpxSettings * Settings = &settings_object;
-extern ADC myAdc;
 
-//static int * raw;
-const int channel = 1;
-
-void  init() {
-   Serial.begin(9600);
-   pinMode(13, OUTPUT);
-   //pinMode(0, INPUT);
-   digitalWriteFast(13, HIGH);
-   //MIDI.begin(1);
-}
-
-void menu_init() {
-
-}
 
 extern "C" int main() 
 {
-  init();
+  teensy_init();
+  button_init();
+  lcd_init();
+  menu_init();
   adcinit();
-  //timerinit(); //add this in to make the adc run
   //oscinit();
   //calEEPROMinit();
   //loadPresetDefault();
-
 //menu test stuff
-  RGB rgb (8, 9, 10);
-  struct rgb_color_t blue;
-  blue.r = 0;
-  blue.g = 0;
-  blue.b = 255;
-  rgb.set_pwm_n(blue);
-  lcd.begin(30);
-  lcd.clear();
-  lcd.drawstring(2, 5, "Triplexer 2");
-  lcd.display();
-  int test_data = -100;
-  char buf[16];
-  MenuEntryDataInt mydata(&test_data);
-  SubMenu toplevel (NULL); 
-  SubMenu lowerlevel (&toplevel);
-  MenuEntry entry1((char *)"entry 1", NULL, (MenuEntryData *) &mydata );
-  MenuEntry entry2((char *)"entry 2", NULL, NULL, &lowerlevel);
-  MenuEntry lower_entry1((char *)"lower entry 1", NULL, NULL);
-  MenuEntry lower_entry2((char *)"lower entry 2", NULL, NULL);
-  toplevel.add_entry(&entry1);
-  toplevel.add_entry(&entry2);
-  lowerlevel.add_entry(&lower_entry1);
-  lowerlevel.add_entry(&lower_entry2);
-  LcdDrawMenu lcd_menu_draw (MENU_MAX_STR_LEN);
-  Menu menu (&toplevel, &toplevel, (DrawMenu *) &lcd_menu_draw);
-  menu.draw();
-   while (1) {
-   //checkmidi();
-   //checkosc(); //this function only works inside a while loop
-   } 
+  timerinit();
+  while (1) {
+    //Serial.flush();
+    delay(1);
+    //Serial.print("hello\n\r");
+    //Serial.send_now();
+    //sampleTimer.end();
+    //Serial.print(adc_ticks);
+    //update button state
+    back_button.update(adc_ticks);
+    save_button.update(adc_ticks);
+    enc_button.update(adc_ticks);
+    encoder_update(adc_ticks);
+    lcd_refresh(adc_ticks);
+    //refresh lcd
+    //checkmidi();
+    //checkosc(); //this function only works inside a while loop
+    //digitalWriteFast(13, HIGH);
+    //delay(1);
+    //digitalWriteFast(13, LOW);
+    //delay(500);
+  } 
 }
-
-
-
-
 
