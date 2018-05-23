@@ -36,7 +36,8 @@ struct calEEPROM{
    int z_lr;
 } calEEPROM;
 
-
+//these are global values that are most recent output values over 16 bits.
+unsigned int x, y, t; //final output values
 volatile unsigned int ul, ur, ll, lr;  //upper left, upper right, lower left, lower right values (A0 to A3)
 static int z_ul, z_ur, z_ll, z_lr; //store corner zero values
 unsigned int ul_sens = 255; unsigned int ur_sens = 255; unsigned int ll_sens=255; unsigned int lr_sens = 255; //sensitivy multiplier values for each sensor, 0 to 255
@@ -297,11 +298,11 @@ void calEEPROMinit(){
 }
 
 //dummy isr for testing
-void sampleTimer_isr(){
+void sampleTimer_isr_(){
    adc_ticks++;
 }
 
-void sampleTimer_isr_(){
+void sampleTimer_isr(){
    ul = myAdc.adc0->analogRead(readPinUL);
    ll = myAdc.adc0->analogRead(readPinLL);
    lr = myAdc.adc0->analogRead(readPinLR);
@@ -315,10 +316,7 @@ void sampleTimer_isr_(){
    static int save_buf_i=0;
    static int save_buf_clock_div = 0;
    bool oscSendEnable;
-   //TODO this should change to check output format for each of x, y, t- OSC, MIDI, MIDIUSB, and INVERT
-   //and call appropriate output functions
-   unsigned int x, y, t, //final output values
-   ul_zc, ur_zc, ll_zc, lr_zc, //zero-corrected values
+   unsigned int ul_zc, ur_zc, ll_zc, lr_zc, //zero-corrected values
    ul_norm, ur_norm, ll_norm, lr_norm, t_norm, //for values normalized by sensitivity of each sensor
    old_x_index, old_y_index, old_t_index,
    new_x_index, new_y_index, new_t_index, //for individual index into response curve 

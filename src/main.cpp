@@ -26,10 +26,12 @@ Menu main_menu;
 Menu utilities_menu;
 Menu *current_menu = &main_menu;
 
+//current saved setting number
+int settings_index = 0;
+
 //PWM backlight control
 struct rgb_color_t blue {0, 0, 255};
-
-RGB rgb (8, 9, 10);
+RGB rgb(8, 9, 10);
 
 //ST7565 graphic lcd
 ST7565 lcd(7, 6, 5, 4);
@@ -47,6 +49,7 @@ tpxSettings * Settings = &settings_object;
 
 extern "C" int main() 
 {
+  //intialize_EEPROM_with_default_settings(); //uncomment to initialize EEPROM on first board programming.
   teensy_init();
   button_init();
   lcd_init();
@@ -70,7 +73,6 @@ extern "C" int main()
     enc_button.update(adc_ticks);
     encoder_update(adc_ticks);
     lcd_refresh(adc_ticks);
-    //refresh lcd
     //checkmidi();
     //checkosc(); //this function only works inside a while loop
     //digitalWriteFast(13, HIGH);

@@ -18,7 +18,7 @@ class param {
       uint8_t settings[6];
       bool enabled;
       uint8_t mode;
-      param() : enabled(false), mode(SETTINGS_MODE_MIDIUSB) // on instantiation all params are initially disabled
+      param() : enabled(true), mode(SETTINGS_MODE_MIDIUSB) // on instantiation all params are initially disabled
       {
        // initialize settings map! 
          settings[0] = 1; // MIDI Channel
@@ -26,6 +26,25 @@ class param {
          settings[2] = 0; // invert
          settings[3] = 50; // response curve sensitivity 0 = exponential, 50 = linear, 100 = log
          settings[4] = 100; //100 = max width, 0 = min
+      }
+      //copy constructor. Handy for use with menu
+      param(const param &p){
+         enabled = p.enabled;
+         mode = p.mode;
+         settings[0] = p.settings[0]; // MIDI Channel
+         settings[1] = p.settings[1]; // MIDI CC number
+         settings[2] = p.settings[2]; // invert
+         settings[3] = p.settings[3]; // response curve sensitivity 0 = exponential, 50 = linear, 100 = log
+         settings[4] = p.settings[4]; //100 = max width, 0 = min
+      }
+      void copy(const param &p) {
+         enabled = p.enabled;
+         mode = p.mode;
+         settings[0] = p.settings[0]; // MIDI Channel
+         settings[1] = p.settings[1]; // MIDI CC number
+         settings[2] = p.settings[2]; // invert
+         settings[3] = p.settings[3]; // response curve sensitivity 0 = exponential, 50 = linear, 100 = log
+         settings[4] = p.settings[4]; //100 = max width, 0 = min
       }
       // does no error checking. rely on front-end to do it
       void set(uint8_t option, uint8_t value); 
@@ -35,9 +54,8 @@ class param {
 
 //param mode, param invert
 class tpxSettings {
-   private:
-      param X, Y, Z;
    public:
+      param X, Y, Z;
       //bool isValid(uint8_t XMode, uint8_t YMode, uint8_t Z); 
       bool isParamEnabled(char param);
       uint8_t setParamMode(char param, uint8_t modeToSet);
